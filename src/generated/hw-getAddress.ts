@@ -22,6 +22,8 @@ import solana from "../families/solana/hw-getAddress";
 
 import stellar from "../families/stellar/hw-getAddress";
 
+import terra from "../families/terra/hw-getAddress";
+
 import tezos from "../families/tezos/hw-getAddress";
 
 import tron from "../families/tron/hw-getAddress";
@@ -40,6 +42,7 @@ export default {
   ripple,
   solana,
   stellar,
+  terra,
   tezos,
   tron,
 };

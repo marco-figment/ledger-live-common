@@ -20,6 +20,8 @@ import solana from "../../families/solana/bridge/js";
 
 import stellar from "../../families/stellar/bridge/js";
 
+import terra from "../../families/terra/bridge/js";
+
 import tezos from "../../families/tezos/bridge/js";
 
 import tron from "../../families/tron/bridge/js";
@@ -37,6 +39,7 @@ export default {
   ripple,
   solana,
   stellar,
+  terra,
   tezos,
   tron,
 };

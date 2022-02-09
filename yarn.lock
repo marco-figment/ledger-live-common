@@ -994,10 +994,8 @@
   dependencies:
     commander "^2.20.0"
 
-"@ledgerhq/cryptoassets@6.23.1", "@ledgerhq/cryptoassets@^6.23.1":
+"@ledgerhq/cryptoassets@^6.23.1", "@ledgerhq/cryptoassets@file:.yalc/@ledgerhq/cryptoassets":
   version "6.23.1"
-  resolved "https://registry.yarnpkg.com/@ledgerhq/cryptoassets/-/cryptoassets-6.23.1.tgz#23d6343b73a738ac775693af0fb5308eb42a6dbb"
-  integrity sha512-SNtu7nuXVRH1um3gvYWFCBMfYKhT8qJBNdsYjRWEDhLdWB4atMLiUoBxE/uo+/+0QLGzaJ79hbfOfOH6f12Lyw==
   dependencies:
     invariant "2"
 

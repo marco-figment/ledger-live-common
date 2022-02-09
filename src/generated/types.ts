@@ -100,6 +100,15 @@ import { Transaction as stellarTransaction } from "../families/stellar/types";
 import { TransactionRaw as stellarTransactionRaw } from "../families/stellar/types";
 import { NetworkInfo as stellarNetworkInfo } from "../families/stellar/types";
 import { NetworkInfoRaw as stellarNetworkInfoRaw } from "../families/stellar/types";
+import { reflect as terraReflect } from "../families/terra/types";
+import { CoreStatics as CoreStatics_terra } from "../families/terra/types";
+import { CoreAccountSpecifics as CoreAccountSpecifics_terra } from "../families/terra/types";
+import { CoreOperationSpecifics as CoreOperationSpecifics_terra } from "../families/terra/types";
+import { CoreCurrencySpecifics as CoreCurrencySpecifics_terra } from "../families/terra/types";
+import { Transaction as terraTransaction } from "../families/terra/types";
+import { TransactionRaw as terraTransactionRaw } from "../families/terra/types";
+import { NetworkInfo as terraNetworkInfo } from "../families/terra/types";
+import { NetworkInfoRaw as terraNetworkInfoRaw } from "../families/terra/types";
 import { reflect as tezosReflect } from "../families/tezos/types";
 import { CoreStatics as CoreStatics_tezos } from "../families/tezos/types";
 import { CoreAccountSpecifics as CoreAccountSpecifics_tezos } from "../families/tezos/types";
@@ -132,6 +141,7 @@ export type SpecificStatics = {}
 & CoreStatics_ripple
 & CoreStatics_solana
 & CoreStatics_stellar
+& CoreStatics_terra
 & CoreStatics_tezos
 & CoreStatics_tron
 export type CoreAccountSpecifics = {}
@@ -147,6 +157,7 @@ export type CoreAccountSpecifics = {}
 & CoreAccountSpecifics_ripple
 & CoreAccountSpecifics_solana
 & CoreAccountSpecifics_stellar
+& CoreAccountSpecifics_terra
 & CoreAccountSpecifics_tezos
 & CoreAccountSpecifics_tron
 export type CoreOperationSpecifics = {}
@@ -162,6 +173,7 @@ export type CoreOperationSpecifics = {}
 & CoreOperationSpecifics_ripple
 & CoreOperationSpecifics_solana
 & CoreOperationSpecifics_stellar
+& CoreOperationSpecifics_terra
 & CoreOperationSpecifics_tezos
 & CoreOperationSpecifics_tron
 export type CoreCurrencySpecifics = {}
@@ -177,6 +189,7 @@ export type CoreCurrencySpecifics = {}
 & CoreCurrencySpecifics_ripple
 & CoreCurrencySpecifics_solana
 & CoreCurrencySpecifics_stellar
+& CoreCurrencySpecifics_terra
 & CoreCurrencySpecifics_tezos
 & CoreCurrencySpecifics_tron
 export type Transaction =
@@ -192,6 +205,7 @@ export type Transaction =
   | rippleTransaction
   | solanaTransaction
   | stellarTransaction
+  | terraTransaction
   | tezosTransaction
   | tronTransaction
 export type TransactionRaw =
@@ -207,6 +221,7 @@ export type TransactionRaw =
   | rippleTransactionRaw
   | solanaTransactionRaw
   | stellarTransactionRaw
+  | terraTransactionRaw
   | tezosTransactionRaw
   | tronTransactionRaw
 export type NetworkInfo =
@@ -219,6 +234,7 @@ export type NetworkInfo =
   | neoNetworkInfo
   | rippleNetworkInfo
   | stellarNetworkInfo
+  | terraNetworkInfo
   | tezosNetworkInfo
   | tronNetworkInfo
 export type NetworkInfoRaw =
@@ -231,6 +247,7 @@ export type NetworkInfoRaw =
   | neoNetworkInfoRaw
   | rippleNetworkInfoRaw
   | stellarNetworkInfoRaw
+  | terraNetworkInfoRaw
   | tezosNetworkInfoRaw
   | tronNetworkInfoRaw
 export const reflectSpecifics = (declare: any): Array<{ OperationMethods: Record<string, unknown>, AccountMethods: Record<string, unknown> }> => [
@@ -246,6 +263,7 @@ export const reflectSpecifics = (declare: any): Array<{ OperationMethods: Record
   rippleReflect(declare),
   solanaReflect(declare),
   stellarReflect(declare),
+  terraReflect(declare),
   tezosReflect(declare),
   tronReflect(declare),
 ] as Array<{ OperationMethods: Record<string, unknown>, AccountMethods: Record<string, unknown> }>;

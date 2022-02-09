@@ -341,6 +341,16 @@ const envDefinitions = {
     parser: stringParser,
     desc: "libcore encryption password",
   },
+  LUNA_API_INDEXER: {
+    def: "localhost:4444",
+    parser: stringParser,
+    desc: "Explorer API for Luna",
+  },
+  LUNA_API_NODE: {
+    def: "localhost:5555",
+    parser: stringParser,
+    desc: "Node endpoint for Luna",
+  },
   MANAGER_API_BASE: {
     def: "https://manager.api.live.ledger.com/api",
     parser: stringParser,
