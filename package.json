@@ -31,7 +31,8 @@
     "lib",
     "src",
     "react.js",
-    "reactNative.js"
+    "reactNative.js",
+    ".yalc"
   ],
   "peerDependencies": {
     "react": ">=16",
