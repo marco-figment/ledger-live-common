@@ -17,15 +17,13 @@ const getIndexerUrl = (route): string =>
 const getNodeUrl = (route): string =>
   `${getEnv("LUNA_API_NODE")}${route || ""}`;
 
-const fetchAccountDetails = async (
-  address: string,
-  transactionsLimit: number = DEFAULT_TRANSACTIONS_LIMIT
-) => {
+const fetchAccountBalance = async (address: string) => {
   const { data } = await network({
     method: "GET",
-    url: getIndexerUrl(`/v1/bank/${address}?limit=${transactionsLimit}`),
+    url: getIndexerUrl(`/cosmos/bank/v1beta1/balances/${address}`),
   });
-  return data;
+  const amount = await data.balances?.getAmount();
+  return amount;
 };
 
 /**
@@ -198,10 +196,9 @@ const fetchLatestBlockHeight = async () => {
 };
 
 export const getAccount = async (address: string, accountId: string) => {
-  const accountDetails = await fetchAccountDetails(address);
-  const spendableBalance = new BigNumber(accountDetails.available);
+  const spendableBalance = await fetchAccountBalance(address);
   const blockHeight = await fetchLatestBlockHeight();
-  const operations = getOperations(accountId, address);
+  const operations = await getOperations(accountId, address);
 
   return {
     blockHeight,
