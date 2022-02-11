@@ -7,12 +7,10 @@ import {
   updateTransaction,
   prepareTransaction,
 } from "../js-transaction";
-import getTransactionStatus from "../js-getTransactionStatus";
-import estimateMaxSpendable from "../js-estimateMaxSpendable";
-import signOperation from "../js-signOperation";
-import broadcast from "../js-broadcast";
 
-// import { getPreloadStrategy, preload, hydrate } from "../preload";
+import { estimateMaxSpendable, getTransactionStatus } from "../api/mocks";
+
+import { signOperation, broadcast } from "../../../bridge/mockHelpers";
 
 const preload = () => Promise.resolve({});
 const hydrate = (): void => {};

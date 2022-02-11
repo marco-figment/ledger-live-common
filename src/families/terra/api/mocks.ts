@@ -33,7 +33,11 @@ const updateTransaction = (t, patch) => ({ ...t, ...patch });
 
 const prepareTransaction = async (a, t) => t;
 
-const estimateMaxSpendable = ({ account, parentAccount, transaction }) => {
+export const estimateMaxSpendable = ({
+  account,
+  parentAccount,
+  transaction,
+}) => {
   const mainAccount = getMainAccount(account, parentAccount);
   const estimatedFees = transaction?.fees || new BigNumber(5000);
   return Promise.resolve(
@@ -41,7 +45,7 @@ const estimateMaxSpendable = ({ account, parentAccount, transaction }) => {
   );
 };
 
-const getTransactionStatus = (account, t) => {
+export const getTransactionStatus = (account, t) => {
   const errors = {};
   const warnings = {};
   const useAllAmount = !!t.useAllAmount;
