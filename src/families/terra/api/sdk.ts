@@ -37,7 +37,6 @@ function getOperationType(eventSendContent: TerraEventContent): OperationType {
     case TerraAccountTransactionTypeEnum.Receive:
       return "IN";
     default:
-      log("terra/api", `Unknown operation type ${type} - fallback to NONE`);
       return "NONE";
   }
 }

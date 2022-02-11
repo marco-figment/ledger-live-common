@@ -29,7 +29,7 @@ export const createTransaction = (): Transaction => ({
  */
 export const updateTransaction = (
   t: Transaction,
-  patch: $Shape<Transaction>
+  patch: Partial<Transaction>
 ) => ({ ...t, ...patch });
 
 /**
