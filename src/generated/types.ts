@@ -75,6 +75,15 @@ import { Transaction as neoTransaction } from "../families/neo/types";
 import { TransactionRaw as neoTransactionRaw } from "../families/neo/types";
 import { NetworkInfo as neoNetworkInfo } from "../families/neo/types";
 import { NetworkInfoRaw as neoNetworkInfoRaw } from "../families/neo/types";
+import { reflect as osmosisReflect } from "../families/osmosis/types";
+import { CoreStatics as CoreStatics_osmosis } from "../families/osmosis/types";
+import { CoreAccountSpecifics as CoreAccountSpecifics_osmosis } from "../families/osmosis/types";
+import { CoreOperationSpecifics as CoreOperationSpecifics_osmosis } from "../families/osmosis/types";
+import { CoreCurrencySpecifics as CoreCurrencySpecifics_osmosis } from "../families/osmosis/types";
+import { Transaction as osmosisTransaction } from "../families/osmosis/types";
+import { TransactionRaw as osmosisTransactionRaw } from "../families/osmosis/types";
+import { NetworkInfo as osmosisNetworkInfo } from "../families/osmosis/types";
+import { NetworkInfoRaw as osmosisNetworkInfoRaw } from "../families/osmosis/types";
 import { reflect as polkadotReflect } from "../families/polkadot/types";
 import { CoreStatics as CoreStatics_polkadot } from "../families/polkadot/types";
 import { CoreAccountSpecifics as CoreAccountSpecifics_polkadot } from "../families/polkadot/types";
@@ -136,6 +145,7 @@ export type SpecificStatics = {}
 & CoreStatics_ethereum
 & CoreStatics_filecoin
 & CoreStatics_neo
+& CoreStatics_osmosis
 & CoreStatics_polkadot
 & CoreStatics_ripple
 & CoreStatics_solana
@@ -152,6 +162,7 @@ export type CoreAccountSpecifics = {}
 & CoreAccountSpecifics_ethereum
 & CoreAccountSpecifics_filecoin
 & CoreAccountSpecifics_neo
+& CoreAccountSpecifics_osmosis
 & CoreAccountSpecifics_polkadot
 & CoreAccountSpecifics_ripple
 & CoreAccountSpecifics_solana
@@ -168,6 +179,7 @@ export type CoreOperationSpecifics = {}
 & CoreOperationSpecifics_ethereum
 & CoreOperationSpecifics_filecoin
 & CoreOperationSpecifics_neo
+& CoreOperationSpecifics_osmosis
 & CoreOperationSpecifics_polkadot
 & CoreOperationSpecifics_ripple
 & CoreOperationSpecifics_solana
@@ -184,6 +196,7 @@ export type CoreCurrencySpecifics = {}
 & CoreCurrencySpecifics_ethereum
 & CoreCurrencySpecifics_filecoin
 & CoreCurrencySpecifics_neo
+& CoreCurrencySpecifics_osmosis
 & CoreCurrencySpecifics_polkadot
 & CoreCurrencySpecifics_ripple
 & CoreCurrencySpecifics_solana
@@ -200,6 +213,7 @@ export type Transaction =
   | ethereumTransaction
   | filecoinTransaction
   | neoTransaction
+  | osmosisTransaction
   | polkadotTransaction
   | rippleTransaction
   | solanaTransaction
@@ -216,6 +230,7 @@ export type TransactionRaw =
   | ethereumTransactionRaw
   | filecoinTransactionRaw
   | neoTransactionRaw
+  | osmosisTransactionRaw
   | polkadotTransactionRaw
   | rippleTransactionRaw
   | solanaTransactionRaw
@@ -230,6 +245,7 @@ export type NetworkInfo =
   | ethereumNetworkInfo
   | filecoinNetworkInfo
   | neoNetworkInfo
+  | osmosisNetworkInfo
   | rippleNetworkInfo
   | stellarNetworkInfo
   | tezosNetworkInfo
@@ -242,6 +258,7 @@ export type NetworkInfoRaw =
   | ethereumNetworkInfoRaw
   | filecoinNetworkInfoRaw
   | neoNetworkInfoRaw
+  | osmosisNetworkInfoRaw
   | rippleNetworkInfoRaw
   | stellarNetworkInfoRaw
   | tezosNetworkInfoRaw
@@ -256,6 +273,7 @@ export const reflectSpecifics = (declare: any): Array<{ OperationMethods: Record
   ethereumReflect(declare),
   filecoinReflect(declare),
   neoReflect(declare),
+  osmosisReflect(declare),
   polkadotReflect(declare),
   rippleReflect(declare),
   solanaReflect(declare),
