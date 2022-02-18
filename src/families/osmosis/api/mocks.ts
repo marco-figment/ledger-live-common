@@ -19,7 +19,7 @@ import { makeAccountBridgeReceive } from "../../../bridge/mockHelpers";
 
 const receive = makeAccountBridgeReceive();
 
-const createTransaction = (): Transaction => ({
+export const createTransaction = (): Transaction => ({
   family: "osmosis",
   mode: "send",
   amount: new BigNumber(0),
@@ -29,9 +29,9 @@ const createTransaction = (): Transaction => ({
   memo: null,
 });
 
-const updateTransaction = (t, patch) => ({ ...t, ...patch });
+export const updateTransaction = (t, patch) => ({ ...t, ...patch });
 
-const prepareTransaction = async (a, t) => t;
+export const prepareTransaction = async (a, t) => t;
 
 export const estimateMaxSpendable = ({
   account,

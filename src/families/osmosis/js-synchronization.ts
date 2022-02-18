@@ -25,7 +25,11 @@ const getAccountShape: GetAccountShape = async (info) => {
     // redelegatingBalance,
     // unbondingBalance,
     // commissions,
-  } = await getAccount(address, currency.id);
+  } = await getAccount(address);
+
+  console.log(`JS SYNC: got account: ${blockHeight}, ${balance}`);
+
+  throw new Error("breakpoint");
 
   // Merge new operations with the previously synced ones
   let startAt = 0;

@@ -4,37 +4,40 @@ import { getEnv } from "../../../env";
 import { Operation, OperationType } from "../../../types";
 import { encodeOperationId } from "../../../operation";
 import {
-  TerraAccountTransaction,
-  TerraAccountTransactionTypeEnum,
-  TerraAmount,
-  TerraCurrency,
-  TerraEventContent,
+  CosmosAmount,
+  OsmosisAccountTransaction,
+  OsmosisAccountTransactionTypeEnum,
+  OsmosisAmount,
+  OsmosisCurrency,
+  OsmosisEventContent,
 } from "./sdk.types";
 
 const DEFAULT_TRANSACTIONS_LIMIT = 200;
 const getIndexerUrl = (route): string =>
-  `${getEnv("LUNA_API_INDEXER")}${route || ""}`;
+  `${getEnv("API_OSMOSIS_INDEXER")}${route || ""}`;
 const getNodeUrl = (route): string =>
-  `${getEnv("LUNA_API_NODE")}${route || ""}`;
+  `${getEnv("API_OSMOSIS_NODE")}${route || ""}`;
 
 const fetchAccountBalance = async (address: string) => {
   const { data } = await network({
     method: "GET",
-    url: getIndexerUrl(`/cosmos/bank/v1beta1/balances/${address}`),
+    url: getNodeUrl(`/cosmos/bank/v1beta1/balances/${address}`),
   });
-  const amount = await data.balances?.getAmount();
+  const amount = getOsmoAmountCosmosType(data.balances ? data.balances : []);
   return amount;
 };
 
 /**
  * Map transaction to an Operation Type
  */
-function getOperationType(eventSendContent: TerraEventContent): OperationType {
+function getOperationType(
+  eventSendContent: OsmosisEventContent
+): OperationType {
   const type = eventSendContent.type[0];
   switch (type) {
-    case TerraAccountTransactionTypeEnum.Send:
+    case OsmosisAccountTransactionTypeEnum.Send:
       return "OUT";
-    case TerraAccountTransactionTypeEnum.Receive:
+    case OsmosisAccountTransactionTypeEnum.Receive:
       return "IN";
     default:
       return "NONE";
@@ -45,37 +48,52 @@ function getOperationType(eventSendContent: TerraEventContent): OperationType {
  * Map transaction to a correct Operation Value (affecting account balance)
  */
 function getOperationValue(
-  eventContent: TerraEventContent,
+  eventContent: OsmosisEventContent,
   type: string,
   fee: BigNumber
 ): BigNumber {
   let amount: BigNumber;
   switch (type) {
     // Per operation.ts, in "OUT" case, it includes the fees. in "IN" case, it excludes them.
-    case TerraAccountTransactionTypeEnum.Send:
+    case OsmosisAccountTransactionTypeEnum.Send:
       amount = BigNumber.sum(
-        getMicroLunaAmount(eventContent.sender[0]?.amounts),
+        getOsmoAmountOsmosisType(eventContent.sender[0]?.amounts),
         fee
       );
       break;
-    case TerraAccountTransactionTypeEnum.Receive:
-      amount = getMicroLunaAmount(eventContent.recipient[0]?.amounts);
+    case OsmosisAccountTransactionTypeEnum.Receive:
+      amount = getOsmoAmountOsmosisType(eventContent.recipient[0]?.amounts);
       break;
     default:
       // defaults to received funds (i.e. no fee is added)
-      amount = getMicroLunaAmount(eventContent.recipient[0]?.amounts);
+      amount = getOsmoAmountOsmosisType(eventContent.recipient[0]?.amounts);
   }
   return amount;
 }
 
 /**
- * Extract only the amount from a list of TerraAmount
+ * Extract only the amount from a list of type OsmosisAmount
  */
-export const getMicroLunaAmount = (amounts: TerraAmount[]): BigNumber => {
+export const getOsmoAmountOsmosisType = (
+  amounts: OsmosisAmount[]
+): BigNumber => {
   return amounts.reduce(
     (result, current) =>
-      current.currency === TerraCurrency
+      current.currency === OsmosisCurrency
         ? result.plus(new BigNumber(current.numeric))
+        : result,
+    new BigNumber(0)
+  );
+};
+
+/**
+ * Extract only the amount from a list of type CosmosAmount
+ */
+export const getOsmoAmountCosmosType = (amounts: CosmosAmount[]): BigNumber => {
+  return amounts.reduce(
+    (result, current) =>
+      current.denom === OsmosisCurrency
+        ? result.plus(new BigNumber(current.amount))
         : result,
     new BigNumber(0)
   );
@@ -86,13 +104,15 @@ export const getMicroLunaAmount = (amounts: TerraAmount[]): BigNumber => {
  */
 function convertSendTransactionToOperation(
   accountId: string,
-  eventContent: TerraEventContent,
-  transaction: TerraAccountTransaction,
+  eventContent: OsmosisEventContent,
+  transaction: OsmosisAccountTransaction,
   memo: string
 ): Operation {
   const type = getOperationType(eventContent);
-  const fee = new BigNumber(getMicroLunaAmount(transaction.transaction_fee));
-
+  const fee = new BigNumber(
+    getOsmoAmountOsmosisType(transaction.transaction_fee)
+  );
+  // console.log("convertSendTransactionToOperation called");
   const senders = eventContent.sender[0]?.account?.id
     ? [eventContent.sender[0]?.account?.id]
     : [];
@@ -127,14 +147,13 @@ export const getOperations = async (
   transactionsLimit: number = DEFAULT_TRANSACTIONS_LIMIT
 ): Promise<Operation[]> => {
   const rawTransactions: Operation[] = [];
-  const luna_indexer = getEnv("LUNA_API_INDEXER");
 
   const { data } = await network({
     method: "POST",
-    url: `${luna_indexer}/transactions_search/`,
+    url: getIndexerUrl(`/transactions_search/`),
     data: {
-      network: "terra",
-      account: [addr],
+      network: "terra", //change this to osmosis later
+      account: ["terra1p2yfmz0m9cmlts3ka7j5lp9t237et4c9pap6m0"], // change this to [addr] later
       limit: transactionsLimit,
       offset: startAt + 1,
     },
@@ -149,10 +168,10 @@ export const getOperations = async (
 
     for (let j = 0; j < events.length; j++) {
       switch (
-        events[j].kind // example: "send" or "receive", "aggregateexchangeratevote"... See: TerraAccountTransactionTypeEnum
+        events[j].kind // example: "send" or "receive", "aggregateexchangeratevote"... See: OsmosisAccountTransactionTypeEnum
       ) {
-        case TerraAccountTransactionTypeEnum.Send: {
-          const eventContent: TerraEventContent = events[j].sub;
+        case OsmosisAccountTransactionTypeEnum.Send: {
+          const eventContent: OsmosisEventContent = events[j].sub;
           rawTransactions.push(
             convertSendTransactionToOperation(
               accountId,
@@ -164,8 +183,8 @@ export const getOperations = async (
           );
           break;
         }
-        case TerraAccountTransactionTypeEnum.Receive: {
-          const eventContent: TerraEventContent = events[j].sub;
+        case OsmosisAccountTransactionTypeEnum.Receive: {
+          const eventContent: OsmosisEventContent = events[j].sub;
           rawTransactions.push(
             convertSendTransactionToOperation(
               accountId,
@@ -194,15 +213,12 @@ const fetchLatestBlockHeight = async () => {
   return latestBlockHeight;
 };
 
-export const getAccount = async (address: string, accountId: string) => {
+export const getAccount = async (address: string) => {
   const spendableBalance = await fetchAccountBalance(address);
   const blockHeight = await fetchLatestBlockHeight();
-  const operations = await getOperations(accountId, address);
-
   return {
     blockHeight,
     balance: spendableBalance,
     spendableBalance,
-    operations,
   };
 };

@@ -8,13 +8,13 @@ import { sync, scanAccounts } from "../js-synchronization";
 //   prepareTransaction,
 // } from "../js-transaction";
 
-import { 
+import {
   createTransaction,
   estimateMaxSpendable,
-  getTransactionStatus 
+  getTransactionStatus,
   prepareTransaction,
   updateTransaction,
-  } from "../api/mocks";
+} from "../api/mocks";
 
 import { signOperation, broadcast } from "../../../bridge/mockHelpers";
 
