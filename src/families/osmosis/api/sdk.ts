@@ -158,6 +158,10 @@ export const getOperations = async (
       offset: startAt,
     },
   });
+  if (data == null) {
+    // throw new Error("Error retrieving transaction data");
+    return operations;
+  }
   const accountTransactions = data;
   for (let i = 0; i < accountTransactions.length; i++) {
     const events = accountTransactions[i].events;

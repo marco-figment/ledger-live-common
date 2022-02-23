@@ -32,9 +32,9 @@ const getAccountShape: GetAccountShape = async (info) => {
   let maxIteration = 20;
   let operations = oldOperations;
   let newOperations = await getOperations(accountId, address, startAt++);
-
   do {
     operations = mergeOps(operations, newOperations);
+    console.log("merged operations length: ", operations.length);
     newOperations = await getOperations(accountId, address, startAt++);
   } while (--maxIteration && newOperations.length != 0);
 
@@ -53,7 +53,6 @@ const getAccountShape: GetAccountShape = async (info) => {
     //   commissions,
     // },
   };
-
   return { ...shape, operations };
 };
 
