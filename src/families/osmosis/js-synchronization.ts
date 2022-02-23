@@ -27,10 +27,6 @@ const getAccountShape: GetAccountShape = async (info) => {
     // commissions,
   } = await getAccount(address);
 
-  console.log(`JS SYNC: got account: ${blockHeight}, ${balance}`);
-
-  throw new Error("breakpoint");
-
   // Merge new operations with the previously synced ones
   let startAt = 0;
   let maxIteration = 20;
@@ -57,6 +53,7 @@ const getAccountShape: GetAccountShape = async (info) => {
     //   commissions,
     // },
   };
+
   return { ...shape, operations };
 };
 

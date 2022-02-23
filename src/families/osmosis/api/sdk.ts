@@ -23,17 +23,20 @@ const fetchAccountBalance = async (address: string) => {
     method: "GET",
     url: getNodeUrl(`/cosmos/bank/v1beta1/balances/${address}`),
   });
-  const amount = getOsmoAmountCosmosType(data.balances ? data.balances : []);
+  const amount = getMicroOsmoAmountCosmosType(
+    data.balances ? data.balances : []
+  );
   return amount;
 };
 
 /**
  * Map transaction to an Operation Type
  */
-function getOperationType(
-  eventSendContent: OsmosisEventContent
-): OperationType {
-  const type = eventSendContent.type[0];
+function getOperationType(eventContent: OsmosisEventContent): OperationType {
+  // See if we want to add an additional check to validate transaction type
+  // in transaction.kind matches event.type
+  // Also, get a code review here to see if we can trust this way of getting event type
+  const type = eventContent.type[0];
   switch (type) {
     case OsmosisAccountTransactionTypeEnum.Send:
       return "OUT";
@@ -55,18 +58,18 @@ function getOperationValue(
   let amount: BigNumber;
   switch (type) {
     // Per operation.ts, in "OUT" case, it includes the fees. in "IN" case, it excludes them.
-    case OsmosisAccountTransactionTypeEnum.Send:
+    case "OUT":
       amount = BigNumber.sum(
-        getOsmoAmountOsmosisType(eventContent.sender[0]?.amounts),
+        getMicroOsmoAmount(eventContent.sender[0]?.amounts),
         fee
       );
       break;
-    case OsmosisAccountTransactionTypeEnum.Receive:
-      amount = getOsmoAmountOsmosisType(eventContent.recipient[0]?.amounts);
+    case "IN":
+      amount = getMicroOsmoAmount(eventContent.recipient[0]?.amounts);
       break;
     default:
       // defaults to received funds (i.e. no fee is added)
-      amount = getOsmoAmountOsmosisType(eventContent.recipient[0]?.amounts);
+      amount = getMicroOsmoAmount(eventContent.recipient[0]?.amounts);
   }
   return amount;
 }
@@ -74,9 +77,7 @@ function getOperationValue(
 /**
  * Extract only the amount from a list of type OsmosisAmount
  */
-export const getOsmoAmountOsmosisType = (
-  amounts: OsmosisAmount[]
-): BigNumber => {
+export const getMicroOsmoAmount = (amounts: OsmosisAmount[]): BigNumber => {
   return amounts.reduce(
     (result, current) =>
       current.currency === OsmosisCurrency
@@ -89,7 +90,9 @@ export const getOsmoAmountOsmosisType = (
 /**
  * Extract only the amount from a list of type CosmosAmount
  */
-export const getOsmoAmountCosmosType = (amounts: CosmosAmount[]): BigNumber => {
+export const getMicroOsmoAmountCosmosType = (
+  amounts: CosmosAmount[]
+): BigNumber => {
   return amounts.reduce(
     (result, current) =>
       current.denom === OsmosisCurrency
@@ -109,10 +112,7 @@ function convertSendTransactionToOperation(
   memo: string
 ): Operation {
   const type = getOperationType(eventContent);
-  const fee = new BigNumber(
-    getOsmoAmountOsmosisType(transaction.transaction_fee)
-  );
-  // console.log("convertSendTransactionToOperation called");
+  const fee = new BigNumber(getMicroOsmoAmount(transaction.transaction_fee));
   const senders = eventContent.sender[0]?.account?.id
     ? [eventContent.sender[0]?.account?.id]
     : [];
@@ -132,7 +132,7 @@ function convertSendTransactionToOperation(
     date: new Date(transaction.time),
     senders,
     recipients,
-    hasFailed: !transaction.has_errors,
+    hasFailed: transaction.has_errors,
     extra: { memo }, // will need to serialize this separately as it's an extra field. More info here: https://developers.ledger.com/docs/coin/live-common/
   };
 }
@@ -146,62 +146,62 @@ export const getOperations = async (
   startAt = 0,
   transactionsLimit: number = DEFAULT_TRANSACTIONS_LIMIT
 ): Promise<Operation[]> => {
-  const rawTransactions: Operation[] = [];
+  const operations: Operation[] = [];
 
   const { data } = await network({
     method: "POST",
     url: getIndexerUrl(`/transactions_search/`),
     data: {
-      network: "terra", //change this to osmosis later
-      account: ["terra1p2yfmz0m9cmlts3ka7j5lp9t237et4c9pap6m0"], // change this to [addr] later
+      network: "osmosis",
+      account: [addr],
       limit: transactionsLimit,
-      offset: startAt + 1,
+      offset: startAt,
     },
   });
-
   const accountTransactions = data;
-
   for (let i = 0; i < accountTransactions.length; i++) {
     const events = accountTransactions[i].events;
     const memo = accountTransactions[i].memo;
     const memoTransaction = memo || "";
-
     for (let j = 0; j < events.length; j++) {
+      const transactionType = events[j].kind ? events[j].kind : "n/a";
       switch (
-        events[j].kind // example: "send" or "receive", "aggregateexchangeratevote"... See: OsmosisAccountTransactionTypeEnum
+        transactionType // example: "send" or "receive" See: OsmosisAccountTransactionTypeEnum
       ) {
         case OsmosisAccountTransactionTypeEnum.Send: {
           const eventContent: OsmosisEventContent = events[j].sub;
-          rawTransactions.push(
+          operations.push(
             convertSendTransactionToOperation(
               accountId,
-              eventContent,
+              eventContent[0], // check that I can do this w/ indexer people
               accountTransactions[i],
               memoTransaction
-              // Question, couldn't I simply pass here the Send type instead of re-calculating it later?
             )
           );
           break;
         }
+        // TODO refactor this duplication of code later
         case OsmosisAccountTransactionTypeEnum.Receive: {
           const eventContent: OsmosisEventContent = events[j].sub;
-          rawTransactions.push(
+          operations.push(
             convertSendTransactionToOperation(
               accountId,
               eventContent,
               accountTransactions[i],
               memoTransaction
-              // Question, couldn't I simply pass here the Receive type instead of re-calculating it later?
             )
           );
           break;
         }
         default:
+          // Get feedback on what we want to do here. Maybe just silently ignore
+          // or consider adding the operation with type "NONE", described in operation.ts
+          throw new Error("encountered error while parsing transaction type");
       }
     }
   }
 
-  return rawTransactions;
+  return operations;
 };
 
 const fetchLatestBlockHeight = async () => {
