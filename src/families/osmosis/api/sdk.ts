@@ -147,7 +147,6 @@ export const getOperations = async (
   transactionsLimit: number = DEFAULT_TRANSACTIONS_LIMIT
 ): Promise<Operation[]> => {
   const operations: Operation[] = [];
-
   const { data } = await network({
     method: "POST",
     url: getIndexerUrl(`/transactions_search/`),
@@ -163,16 +162,19 @@ export const getOperations = async (
     return operations;
   }
   const accountTransactions = data;
+  // console.log("number of transactions to parse:", accountTransactions.length);
   for (let i = 0; i < accountTransactions.length; i++) {
     const events = accountTransactions[i].events;
     const memo = accountTransactions[i].memo;
     const memoTransaction = memo || "";
+    // console.log(`evaluating transaction with index: ${i}`);
     for (let j = 0; j < events.length; j++) {
       const transactionType = events[j].kind ? events[j].kind : "n/a";
       switch (
         transactionType // example: "send" or "receive" See: OsmosisAccountTransactionTypeEnum
       ) {
         case OsmosisAccountTransactionTypeEnum.Send: {
+          console.log("-> parsed a SEND transaction");
           const eventContent: OsmosisEventContent = events[j].sub;
           operations.push(
             convertSendTransactionToOperation(
@@ -186,6 +188,7 @@ export const getOperations = async (
         }
         // TODO refactor this duplication of code later
         case OsmosisAccountTransactionTypeEnum.Receive: {
+          console.log("-> parsed a RECEIVE transaction");
           const eventContent: OsmosisEventContent = events[j].sub;
           operations.push(
             convertSendTransactionToOperation(
@@ -200,7 +203,12 @@ export const getOperations = async (
         default:
           // Get feedback on what we want to do here. Maybe just silently ignore
           // or consider adding the operation with type "NONE", described in operation.ts
-          throw new Error("encountered error while parsing transaction type");
+          // throw new Error("encountered error while parsing transaction type");
+          console.log(
+            "skipping transaction, because transaction type is: ",
+            transactionType
+          );
+          break;
       }
     }
   }
