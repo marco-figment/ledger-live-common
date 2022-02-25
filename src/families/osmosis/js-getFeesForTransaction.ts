@@ -1,8 +1,8 @@
 // import { getAbandonSeedAddress } from "@ledgerhq/cryptoassets";
-// import { BigNumber } from "bignumber.js";
-// import { Account } from "../../types";
+import { BigNumber } from "bignumber.js";
+import { Account } from "../../types";
 // import { calculateAmount } from "../polkadot/logic";
-// import { Transaction } from "./types";
+import { Transaction } from "./types";
 
 // /**
 //  * Fetch the transaction fees for a transaction
@@ -31,14 +31,19 @@
 // export default getEstimatedFees;
 
 // For the time being, using Crypto_org's fixed fee estimation
-import { BigNumber } from "bignumber.js";
 const FIXED_GAS_PRICE = 0.025;
 const FIXED_DEFAULT_GAS_LIMIT = 200000;
 
 /**
  * Fetch the transaction fees for a transaction
  */
-const getEstimatedFees = async (): Promise<BigNumber> => {
+const getEstimatedFees = async ({
+  a,
+  t,
+}: {
+  a: Account;
+  t: Transaction;
+}): Promise<BigNumber> => {
   // TODO: call gas station to get a more accurate tx fee in the future
   const estimateFee = Math.ceil(FIXED_GAS_PRICE * FIXED_DEFAULT_GAS_LIMIT);
   return new BigNumber(estimateFee);
