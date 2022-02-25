@@ -2,19 +2,13 @@ import type { AccountBridge, CurrencyBridge } from "../../../types";
 import type { Transaction } from "../types";
 import { makeAccountBridgeReceive } from "../../../bridge/jsHelpers";
 import { sync, scanAccounts } from "../js-synchronization";
-// import {
-//   createTransaction,
-//   updateTransaction,
-//   prepareTransaction,
-// } from "../js-transaction";
-
 import {
   createTransaction,
-  estimateMaxSpendable,
-  getTransactionStatus,
-  prepareTransaction,
   updateTransaction,
-} from "../api/mocks";
+  prepareTransaction,
+} from "../js-transaction";
+
+import { estimateMaxSpendable, getTransactionStatus } from "../api/mocks";
 
 import { signOperation, broadcast } from "../../../bridge/mockHelpers";
 

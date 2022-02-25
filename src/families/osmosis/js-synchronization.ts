@@ -20,23 +20,26 @@ const getAccountShape: GetAccountShape = async (info) => {
     blockHeight,
     balance,
 
-    // this is specific for crypto.org/cosmos I'll probably need them for staking
+    // cryptoOrg stub, will probably them for staking
     // bondedBalance,
     // redelegatingBalance,
     // unbondingBalance,
     // commissions,
   } = await getAccount(address);
+  // } = await getAccount("osmo1q39dy9fv290qzu45wxy8tmq7fwcakn0zqrfjss");
 
   // Merge new operations with the previously synced ones
   let startAt = 0;
   let maxIteration = 20;
   let operations = oldOperations;
+  // console.log("oldOperations.length:", oldOperations.length);
   let newOperations = await getOperations(accountId, address, startAt++);
   do {
     operations = mergeOps(operations, newOperations);
-    console.log("merged operations length: ", operations.length);
     newOperations = await getOperations(accountId, address, startAt++);
   } while (--maxIteration && newOperations.length != 0);
+
+  // console.log("merged operations length: ", operations.length);
 
   const shape = {
     id: accountId,
@@ -45,7 +48,7 @@ const getAccountShape: GetAccountShape = async (info) => {
     operationsCount: operations.length,
     blockHeight,
 
-    // this is specific for crypto.org/cosmos I'll probably need them for staking
+    // cryptoOrg stub, will probably them for staking
     // cryptoOrgResources: {
     //   bondedBalance,
     //   redelegatingBalance,

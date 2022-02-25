@@ -13,13 +13,13 @@ export type NetworkInfoRaw = {
 export type Transaction = TransactionCommon & {
   mode: string;
   family: "osmosis";
-  fees?: BigNumber;
+  fees: BigNumber | null | undefined;
   memo: string | null | undefined;
 };
 export type TransactionRaw = TransactionCommonRaw & {
   family: "osmosis";
   mode: string;
-  fees?: string;
+  fees: BigNumber | null | undefined;
   memo: string | null | undefined;
 };
 
