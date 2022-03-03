@@ -7,9 +7,9 @@ import {
   updateTransaction,
   prepareTransaction,
 } from "../js-transaction";
+import getTransactionStatus from "../js-getTransactionStatus";
 
-import { estimateMaxSpendable, getTransactionStatus } from "../api/mocks";
-
+import { estimateMaxSpendable } from "../api/mocks";
 import { signOperation, broadcast } from "../../../bridge/mockHelpers";
 
 const preload = () => Promise.resolve({});
