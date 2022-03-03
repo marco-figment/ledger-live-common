@@ -105,7 +105,7 @@ export const getMicroOsmoAmountCosmosType = (
 /**
  * Map the send history transaction to a Ledger Live Operation
  */
-function convertSendTransactionToOperation(
+function convertTransactionToOperation(
   accountId: string,
   eventContent: OsmosisEventContent,
   transaction: OsmosisAccountTransaction,
@@ -133,7 +133,7 @@ function convertSendTransactionToOperation(
     senders,
     recipients,
     hasFailed: transaction.has_errors,
-    extra: { memo }, // will need to serialize this separately as it's an extra field. More info here: https://developers.ledger.com/docs/coin/live-common/
+    extra: { memo }, // TODO will need to serialize this separately as it's an extra field. More info here: https://developers.ledger.com/docs/coin/live-common/
   };
 }
 
@@ -177,7 +177,7 @@ export const getOperations = async (
           console.log("-> parsed a SEND transaction");
           const eventContent: OsmosisEventContent = events[j].sub;
           operations.push(
-            convertSendTransactionToOperation(
+            convertTransactionToOperation(
               accountId,
               eventContent[0], // check that I can do this w/ indexer people
               accountTransactions[i],
@@ -191,9 +191,9 @@ export const getOperations = async (
           console.log("-> parsed a RECEIVE transaction");
           const eventContent: OsmosisEventContent = events[j].sub;
           operations.push(
-            convertSendTransactionToOperation(
+            convertTransactionToOperation(
               accountId,
-              eventContent,
+              eventContent[0], // check that I can do this w/ indexer people
               accountTransactions[i],
               memoTransaction
             )
