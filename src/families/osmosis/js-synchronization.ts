@@ -29,17 +29,19 @@ const getAccountShape: GetAccountShape = async (info) => {
   // } = await getAccount("osmo1q39dy9fv290qzu45wxy8tmq7fwcakn0zqrfjss");
 
   // Merge new operations with the previously synced ones
-  let startAt = 0;
-  let maxIteration = 20;
+  let maxIteration = 21;
   let operations = oldOperations;
-  // console.log("oldOperations.length:", oldOperations.length);
-  let newOperations = await getOperations(accountId, address, startAt++);
-  do {
-    operations = mergeOps(operations, newOperations);
-    newOperations = await getOperations(accountId, address, startAt++);
-  } while (--maxIteration && newOperations.length != 0);
+  console.log("oldOperations.length:", oldOperations.length);
 
-  // console.log("merged operations length: ", operations.length);
+  do {
+    const newOperations = await getOperations(
+      accountId,
+      address,
+      maxIteration - 1
+    );
+    operations = mergeOps(operations, newOperations);
+    // } while (--maxIteration && newOperations.length != 0);
+  } while (--maxIteration);
 
   const shape = {
     id: accountId,
