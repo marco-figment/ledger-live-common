@@ -22,7 +22,7 @@ const estimateMaxSpendable = async ({
   const a = getMainAccount(account, parentAccount);
   const t = { ...createTransaction(), ...transaction, useAllAmount: true };
   const fees = await getEstimatedFees({ a, t });
-  return BigNumber.max(0, a.balance.minus(fees));
+  return BigNumber.max(0, a.spendableBalance.minus(fees));
 };
 
 export default estimateMaxSpendable;
