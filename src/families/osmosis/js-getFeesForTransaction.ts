@@ -31,22 +31,15 @@ import { Transaction } from "./types";
 // export default getEstimatedFees;
 
 // For the time being, using Crypto_org's fixed fee estimation
-const FIXED_GAS_PRICE = 0.025;
-const FIXED_DEFAULT_GAS_LIMIT = 200000;
+// const FIXED_GAS_PRICE = 0.025;
+// const FIXED_DEFAULT_GAS_LIMIT = 200000;
 
 /**
  * Fetch the transaction fees for a transaction
  */
-const getEstimatedFees = async ({
-  a,
-  t,
-}: {
-  a: Account;
-  t: Transaction;
-}): Promise<BigNumber> => {
-  // TODO: call gas station to get a more accurate tx fee in the future
-  const estimateFee = Math.ceil(FIXED_GAS_PRICE * FIXED_DEFAULT_GAS_LIMIT);
-  return new BigNumber(estimateFee);
+const getEstimatedFees = async (): Promise<BigNumber> => {
+  // for "send" transactions fees are zero
+  return new BigNumber(0);
 };
 
 export default getEstimatedFees;

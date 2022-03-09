@@ -13,6 +13,9 @@ import {
 } from "./sdk.types";
 
 const DEFAULT_TRANSACTIONS_LIMIT = 200;
+const NAMESPACE = "cosmos";
+const VERSION = "v1beta1";
+
 const getIndexerUrl = (route): string =>
   `${getEnv("API_OSMOSIS_INDEXER")}${route || ""}`;
 const getNodeUrl = (route): string =>
@@ -21,12 +24,20 @@ const getNodeUrl = (route): string =>
 const fetchAccountBalance = async (address: string) => {
   const { data } = await network({
     method: "GET",
-    url: getNodeUrl(`/cosmos/bank/v1beta1/balances/${address}`),
+    url: getNodeUrl(`/${NAMESPACE}/bank/${VERSION}/balances/${address}`),
   });
   const amount = getMicroOsmoAmountCosmosType(
     data.balances ? data.balances : []
   );
   return amount;
+};
+
+export const fetchAccountSequence = async (address: string) => {
+  const { data } = await network({
+    method: "GET",
+    url: getNodeUrl(`/${NAMESPACE}/auth/${VERSION}}/accounts/${address}`),
+  });
+  return data.account.sequence;
 };
 
 /**
