@@ -35,7 +35,7 @@ const fetchAccountBalance = async (address: string) => {
 export const fetchAccountSequence = async (address: string) => {
   const { data } = await network({
     method: "GET",
-    url: getNodeUrl(`/${NAMESPACE}/auth/${VERSION}}/accounts/${address}`),
+    url: getNodeUrl(`/${NAMESPACE}/auth/${VERSION}/accounts/${address}`),
   });
   return data.account.sequence;
 };
@@ -227,18 +227,19 @@ export const getOperations = async (
   return operations;
 };
 
-const fetchLatestBlockHeight = async () => {
+const fetchLatestBlockInfo = async () => {
   const { data } = await network({
     method: "GET",
     url: getNodeUrl(`/blocks/latest`),
   });
   const latestBlockHeight = data?.block?.header?.height;
-  return latestBlockHeight;
+  const chainId = data?.block?.header?.chain_id;
+  return [latestBlockHeight, chainId];
 };
 
 export const getAccount = async (address: string) => {
   const spendableBalance = await fetchAccountBalance(address);
-  const blockHeight = await fetchLatestBlockHeight();
+  const blockHeight = await fetchLatestBlockInfo()[0];
   return {
     blockHeight,
     balance: spendableBalance,
