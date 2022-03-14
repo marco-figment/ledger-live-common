@@ -10,6 +10,7 @@ import {
   OsmosisAmount,
   OsmosisCurrency,
   OsmosisEventContent,
+  OsmosisEventNestedContent,
 } from "./sdk.types";
 
 const DEFAULT_TRANSACTIONS_LIMIT = 200;
@@ -41,21 +42,20 @@ export const fetchAccountSequence = async (address: string) => {
 };
 
 /**
+ * Returns true if account is the signer
+ */
+function isSender(content: OsmosisEventNestedContent, addr: string): boolean {
+  return content.account.id === addr;
+}
+
+/**
  * Map transaction to an Operation Type
  */
-function getOperationType(eventContent: OsmosisEventContent): OperationType {
-  // See if we want to add an additional check to validate transaction type
-  // in transaction.kind matches event.type
-  // Also, get a code review here to see if we can trust this way of getting event type
-  const type = eventContent.type[0];
-  switch (type) {
-    case OsmosisAccountTransactionTypeEnum.Send:
-      return "OUT";
-    case OsmosisAccountTransactionTypeEnum.Receive:
-      return "IN";
-    default:
-      return "NONE";
-  }
+function getOperationType(
+  eventContent: OsmosisEventContent,
+  addr: string
+): OperationType {
+  return isSender(eventContent.sender[0], addr) ? "OUT" : "IN";
 }
 
 /**
@@ -118,11 +118,12 @@ export const getMicroOsmoAmountCosmosType = (
  */
 function convertTransactionToOperation(
   accountId: string,
+  addr: string,
   eventContent: OsmosisEventContent,
   transaction: OsmosisAccountTransaction,
   memo: string
 ): Operation {
-  const type = getOperationType(eventContent);
+  const type = getOperationType(eventContent, addr);
   const fee = new BigNumber(getMicroOsmoAmount(transaction.transaction_fee));
   const senders = eventContent.sender[0]?.account?.id
     ? [eventContent.sender[0]?.account?.id]
@@ -130,7 +131,6 @@ function convertTransactionToOperation(
   const recipients = eventContent.recipient[0]?.account?.id
     ? [eventContent.recipient[0]?.account?.id]
     : [];
-
   return {
     id: encodeOperationId(accountId, transaction.hash, type),
     accountId,
@@ -173,37 +173,25 @@ export const getOperations = async (
     return operations;
   }
   const accountTransactions = data;
-  // console.log("number of transactions to parse:", accountTransactions.length);
   for (let i = 0; i < accountTransactions.length; i++) {
     const events = accountTransactions[i].events;
     const memo = accountTransactions[i].memo;
     const memoTransaction = memo || "";
-    // console.log(`evaluating transaction with index: ${i}`);
     for (let j = 0; j < events.length; j++) {
       const transactionType = events[j].kind ? events[j].kind : "n/a";
       switch (
-        transactionType // example: "send" or "receive" See: OsmosisAccountTransactionTypeEnum
+        // Example: "send". See: OsmosisAccountTransactionTypeEnum.
+        // Note: "send" means all transactions where some party was sending some OSMO,
+        // which means it shouldn't be interpreted as OUT transactions. See isSender()
+        // for context on how we determine if a "send" transaction is IN or OUT.
+        transactionType
       ) {
         case OsmosisAccountTransactionTypeEnum.Send: {
-          console.log("-> parsed a SEND transaction");
           const eventContent: OsmosisEventContent = events[j].sub;
           operations.push(
             convertTransactionToOperation(
               accountId,
-              eventContent[0], // check that I can do this w/ indexer people
-              accountTransactions[i],
-              memoTransaction
-            )
-          );
-          break;
-        }
-        // TODO refactor this duplication of code later
-        case OsmosisAccountTransactionTypeEnum.Receive: {
-          console.log("-> parsed a RECEIVE transaction");
-          const eventContent: OsmosisEventContent = events[j].sub;
-          operations.push(
-            convertTransactionToOperation(
-              accountId,
+              addr,
               eventContent[0], // check that I can do this w/ indexer people
               accountTransactions[i],
               memoTransaction
@@ -215,10 +203,10 @@ export const getOperations = async (
           // Get feedback on what we want to do here. Maybe just silently ignore
           // or consider adding the operation with type "NONE", described in operation.ts
           // throw new Error("encountered error while parsing transaction type");
-          console.log(
-            "skipping transaction, because transaction type is: ",
-            transactionType
-          );
+          // console.log(
+          //   "skipping transaction, because transaction type is: ",
+          //   transactionType
+          // );
           break;
       }
     }
