@@ -42,7 +42,7 @@ export const prepareTransaction = async (a: Account, t: Transaction) => {
   let fees = t.fees;
   let memo = t.memo;
 
-  fees = await getEstimatedFees({ a, t });
+  fees = await getEstimatedFees();
 
   if (t.mode !== "send" && !memo) {
     memo = "Ledger Live";
