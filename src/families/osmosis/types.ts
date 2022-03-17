@@ -19,12 +19,14 @@ export type Transaction = TransactionCommon & {
   family: "osmosis";
   mode: string;
   fees: BigNumber | null | undefined;
+  gas: BigNumber | null | undefined;
   memo: string | null | undefined;
 };
 export type TransactionRaw = TransactionCommonRaw & {
   family: "osmosis";
   mode: string;
   fees: BigNumber | null | undefined;
+  gas: BigNumber | null | undefined;
   memo: string | null | undefined;
 };
 
