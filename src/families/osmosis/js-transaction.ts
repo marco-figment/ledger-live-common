@@ -18,6 +18,7 @@ export const createTransaction = (): Transaction => ({
   recipient: "",
   useAllAmount: false,
   fees: new BigNumber(0),
+  gas: null,
   memo: null,
 });
 
