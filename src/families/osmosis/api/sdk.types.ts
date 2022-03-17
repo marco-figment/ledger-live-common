@@ -7,6 +7,7 @@ export const OsmosisAccountTransactionTypeEnum = {
 
 export const OsmosisCurrency = "uosmo";
 
+// This type describes what a Transaction looks like as returned by the indexer
 export interface OsmosisAccountTransaction {
   id: string;
   hash: string;

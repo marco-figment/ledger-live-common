@@ -2,7 +2,7 @@ import { BigNumber } from "bignumber.js";
 import network from "../../../network";
 import { getEnv } from "../../../env";
 import { Operation, OperationType } from "../../../types";
-import { encodeOperationId } from "../../../operation";
+import { encodeOperationId, patchOperationWithHash } from "../../../operation";
 import {
   CosmosAmount,
   OsmosisAccountTransaction,
@@ -33,12 +33,17 @@ const fetchAccountBalance = async (address: string) => {
   return amount;
 };
 
-export const fetchAccountSequence = async (address: string) => {
+export const fetchAccountInfo = async (address: string) => {
   const { data } = await network({
     method: "GET",
     url: getNodeUrl(`/${NAMESPACE}/auth/${VERSION}/accounts/${address}`),
   });
-  return data.account.sequence;
+  if (data == null) {
+    throw new Error("Error fetching account information");
+  }
+  const accountNumber = data.account?.account_number ?? null;
+  const sequence = data.account?.sequence ?? 0;
+  return { accountNumber, sequence };
 };
 
 /**
@@ -220,17 +225,52 @@ const fetchLatestBlockInfo = async () => {
     method: "GET",
     url: getNodeUrl(`/blocks/latest`),
   });
-  const latestBlockHeight = data?.block?.header?.height;
+  if (data == null) {
+    throw new Error("Error fetching block information");
+  }
+  // TODO what kind of data validation do we want to have here? any sensible defaults?
+  const blockHeight = data?.block?.header?.height;
   const chainId = data?.block?.header?.chain_id;
-  return [latestBlockHeight, chainId];
+  return { blockHeight, chainId };
+};
+
+export const getChainId = async () => {
+  const { chainId } = await fetchLatestBlockInfo();
+  return chainId;
 };
 
 export const getAccount = async (address: string) => {
   const spendableBalance = await fetchAccountBalance(address);
-  const blockHeight = await fetchLatestBlockInfo()[0];
+  const { blockHeight } = await fetchLatestBlockInfo();
   return {
     blockHeight,
     balance: spendableBalance,
     spendableBalance,
   };
+};
+
+export const broadcast = async ({
+  signedOperation: { operation, signature },
+}): Promise<Operation> => {
+  const { data } = await network({
+    method: "POST",
+    url: getNodeUrl(`/${NAMESPACE}/tx/${VERSION}/txs`),
+    data: {
+      tx_bytes: Array.from(Uint8Array.from(Buffer.from(signature, "hex"))),
+      mode: "BROADCAST_MODE_SYNC",
+    },
+  });
+
+  if (data.tx_response.code != 0) {
+    // error codes: https://github.com/cosmos/cosmos-sdk/blob/master/types/errors/errors.go
+    throw new Error(
+      "invalid broadcast return (code: " +
+        (data.tx_response.code || "?") +
+        ", message: '" +
+        (data.tx_response.raw_log || "") +
+        "')"
+    );
+  }
+
+  return patchOperationWithHash(operation, data.tx_response.txhash);
 };
