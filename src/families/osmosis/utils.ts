@@ -1,4 +1,5 @@
 import { decode } from "bech32";
+import { Account } from "../../types";
 
 // Address validation freely inspired from
 // https://github.com/terra-money/terra.js/blob/9e5f553de3ff3e975eaaf91b1f06e45658b1a5e0/src/core/bech32.ts
@@ -20,6 +21,6 @@ function checkPrefixAndLength(
  *
  * @param addr string to check
  */
-export function isValidAddress(addr: string): boolean {
-  return checkPrefixAndLength("osmo", addr, 43);
+export function isValidAddress(currencyPrefix: string, addr: string): boolean {
+  return checkPrefixAndLength(currencyPrefix, addr, 43);
 }

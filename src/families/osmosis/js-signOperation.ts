@@ -39,6 +39,7 @@ const signOperation = ({
         const hdPaths: any = stringToPath("m/" + account.freshAddressPath);
         const ledgerSigner = new LedgerSigner(transport, {
           hdPaths: [hdPaths],
+          prefix: account.currency.id,
         });
         o.next({ type: "device-signature-requested" });
         const accounts = await ledgerSigner.getAccounts();

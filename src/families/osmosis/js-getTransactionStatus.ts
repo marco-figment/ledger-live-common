@@ -55,7 +55,7 @@ const getTransactionStatus = async (
 
   if (!transaction.recipient) {
     errors.recipient = new RecipientRequired();
-  } else if (!isValidAddress(transaction.recipient)) {
+  } else if (!isValidAddress(account.currency.id, transaction.recipient)) {
     errors.recipient = new InvalidAddress("", {
       currencyName: account.currency.name,
     });
