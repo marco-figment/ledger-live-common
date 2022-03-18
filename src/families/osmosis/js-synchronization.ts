@@ -31,7 +31,7 @@ const getAccountShape: GetAccountShape = async (info) => {
   let startAt = 0;
   let maxIteration = 20;
   let operations = oldOperations;
-  console.log("oldOperations.length:", oldOperations.length);
+  // console.log("oldOperations.length:", oldOperations.length);
 
   let newOperations = await getOperations(accountId, address, startAt);
 

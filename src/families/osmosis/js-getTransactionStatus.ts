@@ -27,9 +27,10 @@ const getTransactionStatus = async (
     errors.recipient = new InvalidAddressBecauseDestinationIsAlsoSource();
   }
 
-  if (!transaction.fees || !transaction.fees.gt(0)) {
-    errors.fees = new FeeNotLoaded();
-  }
+  // Removing as Osmosis doesn't have fees
+  // if (!transaction.fees || !transaction.fees.gt(0)) {
+  //   errors.fees = new FeeNotLoaded();
+  // }
 
   const estimatedFees = transaction.fees || new BigNumber(0);
 

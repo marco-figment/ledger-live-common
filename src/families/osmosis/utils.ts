@@ -21,5 +21,5 @@ function checkPrefixAndLength(
  * @param addr string to check
  */
 export function isValidAddress(addr: string): boolean {
-  return checkPrefixAndLength("osmo", addr, 44);
+  return checkPrefixAndLength("osmo", addr, 43);
 }
