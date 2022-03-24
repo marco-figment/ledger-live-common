@@ -252,14 +252,20 @@ export const getAccount = async (address: string) => {
 export const broadcast = async ({
   signedOperation: { operation, signature },
 }): Promise<Operation> => {
+  const url = getNodeUrl(`/${NAMESPACE}/tx/${VERSION}/txs`);
+  console.log("url: ", url);
+  console.log("operation: ", operation);
+
   const { data } = await network({
     method: "POST",
-    url: getNodeUrl(`/${NAMESPACE}/tx/${VERSION}/txs`),
+    url: url,
     data: {
       tx_bytes: Array.from(Uint8Array.from(Buffer.from(signature, "hex"))),
       mode: "BROADCAST_MODE_SYNC",
     },
   });
+
+  console.log("data: ", data);
 
   if (data.tx_response.code != 0) {
     // error codes: https://github.com/cosmos/cosmos-sdk/blob/master/types/errors/errors.go

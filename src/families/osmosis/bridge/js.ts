@@ -8,11 +8,9 @@ import {
   prepareTransaction,
 } from "../js-transaction";
 import getTransactionStatus from "../js-getTransactionStatus";
-
-import { broadcast } from "../../../bridge/mockHelpers";
-import estimateMaxSpendable from "../js-estimateMaxSpendable";
 import signOperation from "../js-signOperation";
-
+import { broadcast } from "../api/sdk";
+import estimateMaxSpendable from "../js-estimateMaxSpendable";
 const preload = () => Promise.resolve({});
 const hydrate = (): void => {};
 
