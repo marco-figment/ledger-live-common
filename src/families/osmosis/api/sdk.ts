@@ -185,11 +185,11 @@ export const getOperations = async (
     for (let j = 0; j < events.length; j++) {
       const transactionType = events[j].kind ? events[j].kind : "n/a";
       switch (
-        // Example: "send". See: OsmosisAccountTransactionTypeEnum.
-        // Note: "send" means all transactions where some party was sending some OSMO,
-        // which means it shouldn't be interpreted as OUT transactions. See isSender()
-        // for context on how we determine if a "send" transaction is IN or OUT.
-        transactionType
+      // Example: "send". See: OsmosisAccountTransactionTypeEnum.
+      // Note: "send" means all transactions where some party was sending some OSMO,
+      // which means it shouldn't be interpreted as OUT transactions. See isSender()
+      // for context on how we determine if a "send" transaction is IN or OUT.
+      transactionType
       ) {
         case OsmosisAccountTransactionTypeEnum.Send: {
           const eventContent: OsmosisEventContent = events[j].sub;
@@ -254,8 +254,8 @@ export const broadcast = async ({
 }): Promise<Operation> => {
   const url = getNodeUrl(`/${NAMESPACE}/tx/${VERSION}/txs`);
   console.log("url: ", url);
-  console.log("operation: ", operation);
-
+  console.log("-> operation: ", operation);
+  console.log("-> signature: ", signature);
   const { data } = await network({
     method: "POST",
     url: url,
@@ -271,10 +271,10 @@ export const broadcast = async ({
     // error codes: https://github.com/cosmos/cosmos-sdk/blob/master/types/errors/errors.go
     throw new Error(
       "invalid broadcast return (code: " +
-        (data.tx_response.code || "?") +
-        ", message: '" +
-        (data.tx_response.raw_log || "") +
-        "')"
+      (data.tx_response.code || "?") +
+      ", message: '" +
+      (data.tx_response.raw_log || "") +
+      "')"
     );
   }
 

@@ -6,11 +6,13 @@ import {
   TxBodyEncodeObject,
 } from "@cosmjs/proto-signing";
 import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
-import { TxRaw } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import { Coin } from "cosmjs-types/cosmos/base/v1beta1/coin";
+import { cosmos } from "@keplr-wallet/cosmos";
 import BigNumber from "bignumber.js";
 import { fetchAccountInfo } from "./api/sdk";
-import { MsgSend } from "cosmjs-types/cosmos/bank/v1beta1/tx";
+import { AminoSignResponse } from "@cosmjs/amino";
 import { AminoMsgSend } from "@cosmjs/stargate";
+import Long from "long";
 
 export const buildTransaction = async (
   account: Account,
@@ -18,8 +20,7 @@ export const buildTransaction = async (
 ): Promise<any> => {
   // TODO this "msgs" should instead be defined as protoMsgs of type google.protobuf.IAny[];
   const aminoMsgs: Array<{ type: string; value: any }> = [];
-  const protoMsgs: Array<{ type_url: string; typeUrl: string; value: any }> =
-    [];
+  const protoMsgs: Array<{ type_url: string; value: Uint8Array }> = [];
 
   // Ledger Live is able to build transaction atomically,
   // Take care expected data are complete before push msg.
@@ -52,14 +53,13 @@ export const buildTransaction = async (
         // PROTO MESSAGE
         protoMsgs.push({
           type_url: "/cosmos.bank.v1beta1.MsgSend", // this is correct per: https://github.com/chainapsis/keplr-wallet/blob/477c57ce10beab169ad8b0da7d929c5bb988ca7e/packages/stores/src/account/cosmos.ts#L144
-          typeUrl: "/cosmos.bank.v1beta1.MsgSend",
-          value: await MsgSend.encode({
+          value: cosmos.bank.v1beta1.MsgSend.encode({
             // MsgSend.encode per https://github.com/chainapsis/keplr-wallet/blob/477c57ce10beab169ad8b0da7d929c5bb988ca7e/packages/stores/src/account/cosmos.ts#L145-L149
             fromAddress: account.freshAddress,
             toAddress: transaction.recipient,
             amount: [
               {
-                denom: account.currency.units[1].code, // this is 'uosmo', per @ledgerhq/cryptoassets
+                denom: account.currency.units[1].code,
                 amount: transaction.amount.toString(),
               },
             ],
@@ -79,49 +79,77 @@ export const buildTransaction = async (
 export const postBuildTransaction = async (
   account: Account,
   transaction: Transaction,
-  pubkey: any,
-  protoMsgs: any,
-  signature: Uint8Array
+  signResponse: AminoSignResponse,
+  protoMsgs: any
 ): Promise<any> => {
-  console.log("got to post build transaction");
-  const txBodyFields: TxBodyEncodeObject = {
-    typeUrl: "/cosmos.tx.v1beta1.TxBody",
-    value: {
-      messages: protoMsgs,
-      memo: transaction.memo || "",
-    },
-  };
+  // const txBodyFields: TxBodyEncodeObject = {
+  //   typeUrl: "/cosmos.tx.v1beta1.TxBody",
+  //   value: {
+  //     messages: protoMsgs,
+  //     memo: transaction.memo || "",
+  //   },
+  // };
 
   // const registry = new Registry([
   //   ["/cosmos.bank.v1beta1.MsgSend", MsgSend],
   //   ["cosmos-sdk/MsgSend", MsgSend],
   // ]);
-  const registry = new Registry();
+  // const registry = new Registry();
 
-  const { sequence } = await fetchAccountInfo(account.freshAddress);
-  console.log("got here 5");
-  const txBodyBytes = registry.encode(txBodyFields);
-  console.log("got here 6");
-  const authInfoBytes = makeAuthInfoBytes(
-    [{ pubkey, sequence }],
-    [
-      {
-        amount: transaction.fees?.toString() || new BigNumber(0).toString(),
-        denom: account.currency.units[1].code, // this is 'uosmo', per @ledgerhq/cryptoassets
+  // const { sequence } = await fetchAccountInfo(account.freshAddress);
+
+  // const txBodyBytes = registry.encode(txBodyFields);
+
+  // const authInfoBytes = makeAuthInfoBytes(
+  //   [{ pubkey, sequence }],
+  //   [
+  //     {
+  //       amount: transaction.fees?.toString() || new BigNumber(0).toString(),
+  //       denom: account.currency.units[1].code, // this is 'uosmo', per @ledgerhq/cryptoassets
+  //     },
+  //   ],
+  //   transaction.gas?.toNumber() || new BigNumber(200000).toNumber(), // using 200000 as default, similar to examples found in osmosis codebase
+  //   SignMode.SIGN_MODE_LEGACY_AMINO_JSON
+  // );
+
+  // const txRaw = TxRaw.fromPartial({
+  //   bodyBytes: txBodyBytes,
+  //   authInfoBytes,
+  //   signatures: [signature],
+  // });
+  // const tx_bytes = Array.from(Uint8Array.from(TxRaw.encode(txRaw).finish()));
+
+  const signed_tx_bytes = cosmos.tx.v1beta1.TxRaw.encode({
+    bodyBytes: cosmos.tx.v1beta1.TxBody.encode({
+      messages: protoMsgs,
+      memo: signResponse.signed.memo,
+    }).finish(),
+    authInfoBytes: cosmos.tx.v1beta1.AuthInfo.encode({
+      signerInfos: [
+        {
+          publicKey: {
+            type_url: "/cosmos.crypto.secp256k1.PubKey",
+            value: cosmos.crypto.secp256k1.PubKey.encode({
+              key: Buffer.from(signResponse.signature.pub_key.value, "base64"),
+            }).finish(),
+          },
+          modeInfo: {
+            single: {
+              mode: SignMode.SIGN_MODE_LEGACY_AMINO_JSON as cosmos.tx.signing.v1beta1.SignMode,
+            },
+          },
+          sequence: Long.fromString(signResponse.signed.sequence),
+        },
+      ],
+      fee: {
+        amount: signResponse.signed.fee.amount as cosmos.base.v1beta1.ICoin[],
+        gasLimit: Long.fromString(signResponse.signed.fee.gas),
       },
-    ],
-    transaction.gas?.toNumber() || new BigNumber(200000).toNumber(), // using 200000 as default, similar to examples found in osmosis codebase
-    SignMode.SIGN_MODE_LEGACY_AMINO_JSON
-  );
-  console.log("got here 7");
-  const txRaw = TxRaw.fromPartial({
-    bodyBytes: txBodyBytes,
-    authInfoBytes,
-    signatures: [signature],
-  });
-  const tx_bytes = Array.from(Uint8Array.from(TxRaw.encode(txRaw).finish()));
+    }).finish(),
+    signatures: [Buffer.from(signResponse.signature.signature, "base64")],
+  }).finish();
 
-  return tx_bytes;
+  return signed_tx_bytes;
 };
 
 export default buildTransaction;

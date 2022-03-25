@@ -8,7 +8,8 @@ import type { Transaction } from "./types";
 import { fetchAccountInfo, getChainId } from "./api/sdk";
 import { Observable } from "rxjs";
 import { withDevice } from "../../hw/deviceAccess";
-import { encodePubkey } from "@cosmjs/proto-signing";
+// import { encodePubkey } from "@cosmjs/proto-signing";
+import { PubKey } from "cosmjs-types/cosmos/crypto/secp256k1/keys";
 import { encodeOperationId } from "../../operation";
 import { LedgerSigner } from "@cosmjs/ledger-amino";
 import { AminoTypes } from "@cosmjs/stargate";
@@ -55,23 +56,29 @@ const signOperation = ({
         o.next({ type: "device-signature-requested" });
         const accounts = await ledgerSigner.getAccounts();
 
-        let pubkey;
+        // let pubkey;
+        // accounts.forEach((a) => {
+        //   if (a.address == account.freshAddress) {
+        //     pubkey = encodePubkey({
+        //       type: "tendermint/PubKeySecp256k1", // this is correct per keplr
+        //       value: Buffer.from(a.pubkey).toString("base64"),
+        //     });
+        //   }
+        // });
 
-        accounts.forEach((a) => {
-          if (a.address == account.freshAddress) {
-            pubkey = encodePubkey({
-              type: "tendermint/PubKeySecp256k1", // this is correct per keplr
-              value: Buffer.from(a.pubkey).toString("base64"),
-            });
-          }
-        });
-        console.log("got here 1");
+        // let pubkey;
+        // accounts.forEach((a) => {
+        //   if (a.address == account.freshAddress) {
+        //     // pubkey = encodePubkey({
+        //     //   type: "tendermint/PubKeySecp256k1", // this is correct per keplr
+        //     //   value: Buffer.from(a.pubkey).toString("base64"),
+        //     // });
+
         const { aminoMsgs, protoMsgs } = await buildTransaction(
           account,
           transaction
         );
 
-        console.log("got here 2");
         // const aMsgs = aminoMsgs.map((msg) => aminoTypes.fromAmino(msg));
 
         // Note:
@@ -79,35 +86,6 @@ const signOperation = ({
         // Cosmos App support legacy StdTx and required to be ordered in a strict way,
         // Cosmos API expects a different sorting, resulting in a separate signature.
         // https://github.com/LedgerHQ/app-cosmos/blob/6c194daa28936e273f9548eabca9e72ba04bb632/app/src/tx_parser.c#L52
-
-        const fee_to_encode = {
-          amount: [
-            {
-              denom: account.currency.units[1].code,
-              amount: transaction.fees?.toString() as string,
-            },
-          ],
-          gas: transaction.gas?.toString() as string,
-        };
-        const memo = transaction.memo || "";
-
-        // TODO 1
-        // if this doesn't work replace with
-        // and pass aminoMsgs instead of msgs
-
-        // TODO 2
-        // Check if cosmos released a way to sign msgs using protobufs instead of amino msgs
-
-        // "It's possible that the guys from osmosis don't know what they're doing
-        // They change something about types recently"
-
-        // TODO 4
-        // Check the shape thing
-
-        // TODO 5
-        // Maybe bring up to the team that Lukasz thinks we should have control of signing transactions (w/ Slate)
-        // to avoid this mess now and in the future, because we're not relying on all these different implementation & maintainance\
-        // So basically we would have control on the read (indexer) and writing (slate)
 
         // const signed = await ledgerSigner.signAmino(account.freshAddress, {
         //   chain_id: chainId,
@@ -126,35 +104,46 @@ const signOperation = ({
         //   memo: transaction.memo || "",
         // });
 
+        const feeToEncode = {
+          amount: [
+            {
+              denom: account.currency.units[1].code,
+              amount: transaction.fees?.toString() as string,
+            },
+          ],
+          gas: transaction.gas
+            ? (transaction.gas.toString() as string)
+            : (String(100000) as string),
+        };
+
         const signDoc = makeSignDoc(
           aminoMsgs,
-          fee_to_encode,
+          feeToEncode,
           chainId,
-          memo,
+          transaction.memo || "",
           accountNumber.toString(),
           sequence.toString()
         );
 
-        // TODO: check that ledgerSigner is actually expecting the shape of the amino message I'm sending
-        // especially the type url
-        // try without
+        /*
+         *
+         *  so far so good (verified with keplr codebase)
+         *
+         */
 
-        console.log("got here 3");
-        const signed = await ledgerSigner.signAmino(
+        const signResponse = await ledgerSigner.signAmino(
           account.freshAddress,
           signDoc
         );
 
-        console.log("got here 4");
-        const tx_bytes = await postBuildTransaction(
+        const signed_tx_bytes = await postBuildTransaction(
           account,
           transaction,
-          pubkey,
-          protoMsgs,
-          new Uint8Array(Buffer.from(signed.signature.signature, "base64"))
+          signResponse,
+          protoMsgs
         );
 
-        const signature = Buffer.from(tx_bytes).toString("hex");
+        const signature = Buffer.from(signed_tx_bytes).toString("hex");
 
         if (cancelled) {
           return;
@@ -197,6 +186,8 @@ const signOperation = ({
           date: new Date(),
           transactionSequenceNumber: sequence,
         };
+
+        console.log("optimistic operation: ", operation);
 
         o.next({
           type: "signed",
