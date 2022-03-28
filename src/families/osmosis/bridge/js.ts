@@ -12,7 +12,7 @@ import signOperation from "../js-signOperation";
 import { broadcast } from "../api/sdk";
 import estimateMaxSpendable from "../js-estimateMaxSpendable";
 const preload = () => Promise.resolve({});
-const hydrate = (): void => { };
+const hydrate = (): void => {};
 
 const receive = makeAccountBridgeReceive();
 
