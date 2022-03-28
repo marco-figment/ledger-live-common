@@ -19,19 +19,11 @@ function getDeviceTransactionConfig({
     label: "Amount",
   });
 
-  fields.push({
-    type: "amount",
-    label: "Amount",
-  });
-
-  // TODO probably improve this later
   if (!estimatedFees.isNaN() && estimatedFees.isZero()) {
     fields.push({
       type: "fees",
       label: "Fee",
     });
-  } else {
-    throw new Error("Estimated fees is NaN or not zero");
   }
 
   if (transaction.memo) {

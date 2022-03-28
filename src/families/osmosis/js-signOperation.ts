@@ -14,7 +14,7 @@ import { stringToPath } from "@cosmjs/crypto";
 import { buildTransaction, postBuildTransaction } from "./js-buildTransaction";
 import BigNumber from "bignumber.js";
 import { makeSignDoc } from "@cosmjs/launchpad";
-import getEstimatedFees from "./js-getFeesForTransaction";
+import getEstimatedFees, { DEFAULT_FEES } from "./js-getFeesForTransaction";
 
 const signOperation = ({
   account,
@@ -95,15 +95,13 @@ const signOperation = ({
 
         // It shouldn't be necessary to do this, I'm being extra careful
         // for now but should revert later to:
-        // const fee = transaction.fees || new BigNumber(0);
-        const fee = transaction.fees
-          ? new BigNumber(transaction.fees.toNumber())
-          : new BigNumber(0);
+        // const fee = transaction.fees;
+        // ? new BigNumber(transaction.fees.toNumber())
+        // : new BigNumber(DEFAULT_FEES);
 
-        const extra = {};
-
+        const fee = transaction.fees || new BigNumber(DEFAULT_FEES);
+        const extra = { memo: transaction.memo || "" };
         const type: OperationType = "OUT";
-
         const senders: string[] = [];
         const recipients: string[] = [];
 

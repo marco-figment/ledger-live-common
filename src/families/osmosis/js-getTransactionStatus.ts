@@ -10,6 +10,7 @@ import {
 import { Account } from "../../types";
 import { Transaction, TransactionStatus, StatusErrorMap } from "./types";
 import { isValidAddress } from "./utils";
+import { DEFAULT_FEES } from "./js-getFeesForTransaction";
 
 const getTransactionStatus = async (
   account: Account,
@@ -36,12 +37,7 @@ const getTransactionStatus = async (
     throw new Error("fees not loaded");
   }
 
-  // It shouldn't be necessary to do this, I'm being extra careful
-  // for now but should revert later to:
-  // const fee = transaction.fees || new BigNumber(0);
-  const estimatedFees = transaction.fees
-    ? new BigNumber(transaction.fees.toNumber())
-    : new BigNumber(0);
+  const estimatedFees = transaction.fees || new BigNumber(DEFAULT_FEES);
 
   const amount = useAllAmount
     ? account.spendableBalance.minus(estimatedFees)
