@@ -149,7 +149,7 @@ function convertTransactionToOperation(
     senders,
     recipients,
     hasFailed: transaction.has_errors,
-    extra: { memo }, // TODO will need to serialize this separately as it's an extra field. More info here: https://developers.ledger.com/docs/coin/live-common/
+    extra: { memo },
   };
 }
 
@@ -185,11 +185,11 @@ export const getOperations = async (
     for (let j = 0; j < events.length; j++) {
       const transactionType = events[j].kind ? events[j].kind : "n/a";
       switch (
-      // Example: "send". See: OsmosisAccountTransactionTypeEnum.
-      // Note: "send" means all transactions where some party was sending some OSMO,
-      // which means it shouldn't be interpreted as OUT transactions. See isSender()
-      // for context on how we determine if a "send" transaction is IN or OUT.
-      transactionType
+        // Example: "send". See: OsmosisAccountTransactionTypeEnum.
+        // Note: "send" means all transactions where some party was sending some OSMO,
+        // which means it shouldn't be interpreted as OUT transactions. See isSender()
+        // for context on how we determine if a "send" transaction is IN or OUT.
+        transactionType
       ) {
         case OsmosisAccountTransactionTypeEnum.Send: {
           const eventContent: OsmosisEventContent = events[j].sub;
@@ -240,12 +240,12 @@ export const getChainId = async () => {
 };
 
 export const getAccount = async (address: string) => {
-  const spendableBalance = await fetchAccountBalance(address);
+  const balance = await fetchAccountBalance(address);
   const { blockHeight } = await fetchLatestBlockInfo();
   return {
     blockHeight,
-    balance: spendableBalance,
-    spendableBalance,
+    balance,
+    spendableBalance: balance,
   };
 };
 
@@ -253,9 +253,6 @@ export const broadcast = async ({
   signedOperation: { operation, signature },
 }): Promise<Operation> => {
   const url = getNodeUrl(`/${NAMESPACE}/tx/${VERSION}/txs`);
-  console.log("url: ", url);
-  console.log("-> operation: ", operation);
-  console.log("-> signature: ", signature);
   const { data } = await network({
     method: "POST",
     url: url,
@@ -265,16 +262,14 @@ export const broadcast = async ({
     },
   });
 
-  console.log("data: ", data);
-
   if (data.tx_response.code != 0) {
     // error codes: https://github.com/cosmos/cosmos-sdk/blob/master/types/errors/errors.go
     throw new Error(
       "invalid broadcast return (code: " +
-      (data.tx_response.code || "?") +
-      ", message: '" +
-      (data.tx_response.raw_log || "") +
-      "')"
+        (data.tx_response.code || "?") +
+        ", message: '" +
+        (data.tx_response.raw_log || "") +
+        "')"
     );
   }
 

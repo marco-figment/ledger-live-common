@@ -9,7 +9,7 @@ import { getAccountUnit } from "../../account";
 import { formatCurrencyUnit } from "../../currencies";
 
 export const formatTransaction = (
-  { mode, amount, recipient, useAllAmount }: Transaction,
+  { mode, amount, recipient, useAllAmount, memo }: Transaction,
   account: Account
 ): string =>
   `
@@ -23,7 +23,9 @@ ${mode.toUpperCase()} ${
           showCode: true,
           disableRounding: true,
         })
-  }${recipient ? `\nTO ${recipient}` : ""}`;
+  }${recipient ? `\nTO ${recipient}` : ""}${
+    !memo ? "" : `\n with memo=${memo}`
+  }`;
 
 export const fromTransactionRaw = (tr: TransactionRaw): Transaction => {
   const common = fromTransactionCommonRaw(tr);
@@ -33,7 +35,7 @@ export const fromTransactionRaw = (tr: TransactionRaw): Transaction => {
     mode: tr.mode,
     fees: tr.fees ? new BigNumber(tr.fees) : null,
     gas: tr.gas ?? null,
-    memo: tr.memo ?? null,
+    memo: tr.memo,
   };
 };
 
@@ -43,9 +45,9 @@ export const toTransactionRaw = (tr: Transaction): TransactionRaw => {
     ...common,
     family: tr.family,
     mode: tr.mode,
-    fees: tr.fees ? new BigNumber(tr.fees) : null,
+    fees: tr.fees?.toString() || null,
     gas: tr.gas ?? null,
-    memo: tr.memo ?? null,
+    memo: tr.memo,
   };
 };
 

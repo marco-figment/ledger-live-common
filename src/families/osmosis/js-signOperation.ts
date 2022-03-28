@@ -14,6 +14,7 @@ import { stringToPath } from "@cosmjs/crypto";
 import { buildTransaction, postBuildTransaction } from "./js-buildTransaction";
 import BigNumber from "bignumber.js";
 import { makeSignDoc } from "@cosmjs/launchpad";
+import getEstimatedFees from "./js-getFeesForTransaction";
 
 const signOperation = ({
   account,
@@ -45,11 +46,14 @@ const signOperation = ({
           transaction
         );
 
+        const freshFees = await getEstimatedFees();
         const feeToEncode = {
           amount: [
             {
               denom: account.currency.units[1].code,
-              amount: transaction.fees?.toString() as string,
+              amount: transaction.fees
+                ? (transaction.fees.toNumber().toString() as string)
+                : (String(freshFees) as string),
             },
           ],
           gas: transaction.gas
@@ -88,7 +92,14 @@ const signOperation = ({
 
         const hash = ""; // resolved at broadcast time
         const accountId = account.id;
-        const fee = transaction.fees || new BigNumber(0);
+
+        // It shouldn't be necessary to do this, I'm being extra careful
+        // for now but should revert later to:
+        // const fee = transaction.fees || new BigNumber(0);
+        const fee = transaction.fees
+          ? new BigNumber(transaction.fees.toNumber())
+          : new BigNumber(0);
+
         const extra = {};
 
         const type: OperationType = "OUT";

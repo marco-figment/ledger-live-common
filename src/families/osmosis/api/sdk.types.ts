@@ -21,6 +21,7 @@ export interface OsmosisAccountTransaction {
   version: string;
   events: OsmosisEvent[];
   has_errors: boolean;
+  memo?: string;
 }
 export interface OsmosisAmount {
   text: string;

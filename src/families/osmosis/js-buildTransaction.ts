@@ -15,7 +15,6 @@ export const buildTransaction = async (
 
   let isComplete = true;
 
-  // question: does keplr send both messages then?
   switch (transaction.mode) {
     case "send":
       if (!transaction.recipient || transaction.amount.lte(0)) {
