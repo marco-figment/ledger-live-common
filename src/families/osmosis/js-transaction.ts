@@ -3,6 +3,7 @@ import type { Account } from "../../types";
 import type { Transaction } from "./types";
 
 import getEstimatedFees from "./js-getFeesForTransaction";
+import estimateMaxSpendable from "./js-estimateMaxSpendable";
 
 const sameFees = (a, b) => (!a || !b ? a === b : a.eq(b));
 
@@ -39,11 +40,17 @@ export const updateTransaction = (
  * @param {Account} a
  * @param {Transaction} t
  */
-export const prepareTransaction = async (a: Account, t: Transaction) => {
+export const prepareTransaction = async (account: Account, t: Transaction) => {
   let fees = t.fees;
   let memo = t.memo;
 
   fees = await getEstimatedFees();
+
+  if (t.mode === "send") {
+    t.amount = t.useAllAmount
+      ? await estimateMaxSpendable({ account, parentAccount: null })
+      : t.amount;
+  }
 
   if (t.mode !== "send" && !memo) {
     memo = "Ledger Live";

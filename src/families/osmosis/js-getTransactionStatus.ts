@@ -44,7 +44,6 @@ const getTransactionStatus = async (
     : new BigNumber(transaction.amount);
 
   if (amount.lte(0) && !transaction.useAllAmount) {
-    // shouldn't the first condition be valid always and not just when transaction.useAllAmount==true?
     errors.amount = new AmountRequired();
   }
 
