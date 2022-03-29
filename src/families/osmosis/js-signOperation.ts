@@ -93,12 +93,6 @@ const signOperation = ({
         const hash = ""; // resolved at broadcast time
         const accountId = account.id;
 
-        // It shouldn't be necessary to do this, I'm being extra careful
-        // for now but should revert later to:
-        // const fee = transaction.fees;
-        // ? new BigNumber(transaction.fees.toNumber())
-        // : new BigNumber(DEFAULT_FEES);
-
         const fee = transaction.fees || new BigNumber(DEFAULT_FEES);
         const extra = { memo: transaction.memo || "" };
         const type: OperationType = "OUT";
@@ -117,9 +111,7 @@ const signOperation = ({
           id: encodeOperationId(accountId, hash, type),
           hash,
           type,
-          value: transaction.useAllAmount
-            ? account.spendableBalance
-            : transaction.amount.plus(fee),
+          value: transaction.amount, // Note: prepareTransaction already takes care of setting the correct tx amount (w/ fees) if useAllAmount is selected
           fee,
           extra,
           blockHash: null,
