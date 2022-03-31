@@ -34,7 +34,7 @@ export const fromTransactionRaw = (tr: TransactionRaw): Transaction => {
     family: tr.family,
     mode: tr.mode,
     fees: tr.fees ? new BigNumber(tr.fees) : null,
-    gas: tr.gas ?? null,
+    gas: tr.gas ? new BigNumber(tr.gas) : null,
     memo: tr.memo,
   };
 };
@@ -46,7 +46,7 @@ export const toTransactionRaw = (tr: Transaction): TransactionRaw => {
     family: tr.family,
     mode: tr.mode,
     fees: tr.fees?.toString() || null,
-    gas: tr.gas ?? null,
+    gas: tr.gas ? tr.gas.toString() : null,
     memo: tr.memo,
   };
 };

@@ -27,7 +27,7 @@ export type TransactionRaw = TransactionCommonRaw & {
   family: "osmosis";
   mode: string;
   fees: string | null;
-  gas: BigNumber | null | undefined;
+  gas: string | null | undefined;
   memo: string | null | undefined;
 };
 

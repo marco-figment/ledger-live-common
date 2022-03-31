@@ -2,7 +2,7 @@ import { BigNumber } from "bignumber.js";
 import type { Account } from "../../types";
 import type { Transaction } from "./types";
 
-import getEstimatedFees from "./js-getFeesForTransaction";
+import getEstimatedFees, { getEstimatedGas } from "./js-getFeesForTransaction";
 import estimateMaxSpendable from "./js-estimateMaxSpendable";
 
 const sameFees = (a, b) => (!a || !b ? a === b : a.eq(b));
@@ -43,6 +43,7 @@ export const updateTransaction = (
 export const prepareTransaction = async (account: Account, t: Transaction) => {
   let fees = t.fees;
   let memo = t.memo;
+  let gas = t.gas;
 
   fees = await getEstimatedFees();
 
@@ -50,6 +51,8 @@ export const prepareTransaction = async (account: Account, t: Transaction) => {
     t.amount = t.useAllAmount
       ? await estimateMaxSpendable({ account, parentAccount: null })
       : t.amount;
+
+    gas = await getEstimatedGas();
   }
 
   if (t.mode !== "send" && !memo) {
@@ -57,7 +60,7 @@ export const prepareTransaction = async (account: Account, t: Transaction) => {
   }
 
   if (t.memo !== memo || !sameFees(t.fees, fees)) {
-    return { ...t, memo, fees };
+    return { ...t, memo, fees, gas };
   }
 
   return t;

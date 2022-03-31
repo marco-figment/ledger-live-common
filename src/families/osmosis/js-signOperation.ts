@@ -14,7 +14,10 @@ import { stringToPath } from "@cosmjs/crypto";
 import { buildTransaction, postBuildTransaction } from "./js-buildTransaction";
 import BigNumber from "bignumber.js";
 import { makeSignDoc } from "@cosmjs/launchpad";
-import getEstimatedFees, { DEFAULT_FEES } from "./js-getFeesForTransaction";
+import getEstimatedFees, {
+  DEFAULT_FEES,
+  getEstimatedGas,
+} from "./js-getFeesForTransaction";
 
 const signOperation = ({
   account,
@@ -46,19 +49,18 @@ const signOperation = ({
           transaction
         );
 
-        const freshFees = await getEstimatedFees();
         const feeToEncode = {
           amount: [
             {
               denom: account.currency.units[1].code,
               amount: transaction.fees
                 ? (transaction.fees.toNumber().toString() as string)
-                : (String(freshFees) as string),
+                : (String(await getEstimatedFees()) as string),
             },
           ],
           gas: transaction.gas
             ? (transaction.gas.toString() as string)
-            : (String(100000) as string),
+            : (String(await getEstimatedGas()) as string),
         };
 
         const signDoc = makeSignDoc(
