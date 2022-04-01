@@ -40,6 +40,27 @@ const osmosis: AppSpec<Transaction> = {
         };
       },
     },
+    {
+      name: "send max to another account",
+      maxRun: 1,
+      transaction: ({ account, siblings, bridge, maxSpendable }) => {
+        invariant(maxSpendable.gt(minimalAmount), "balance is too low");
+        const sibling = pickSiblings(siblings, maxAccount);
+        const recipient = sibling.freshAddress;
+        return {
+          transaction: bridge.createTransaction(account),
+          updates: [
+            { recipient },
+            { useAllAmount: true },
+            Math.random() < 0.5
+              ? {
+                  memo: "LedgerLiveBot",
+                }
+              : null,
+          ],
+        };
+      },
+    },
   ],
 };
 
