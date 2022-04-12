@@ -6,7 +6,7 @@ import type { AppSpec } from "../../bot/types";
 import { DeviceModelId } from "@ledgerhq/devices";
 
 const currency = getCryptoCurrencyById("osmosis");
-const minimalAmount = parseCurrencyUnit(currency.units[0], "0.001");
+const minimalAmount = parseCurrencyUnit(currency.units[0], "0.00001");
 const maxAccount = 3;
 
 const osmosis: AppSpec<Transaction> = {
