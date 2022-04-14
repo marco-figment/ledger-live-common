@@ -23,15 +23,7 @@ const getTransactionStatus = async (
   if (account.freshAddress === transaction.recipient) {
     errors.recipient = new InvalidAddressBecauseDestinationIsAlsoSource();
   }
-  // Removing as Osmosis doesn't have fees
-  // if (!transaction.fees || !transaction.fees.gt(0)) {
-  //   errors.fees = new FeeNotLoaded();
-  // }
 
-  // if (transaction.fees.isNan()) {
-  //   errors.fees = new FeeNotLoaded();
-  //   throw new Error("error fee is Nan");
-  // }
   if (!transaction.fees || transaction.fees.isNaN()) {
     errors.fees = new FeeNotLoaded();
     throw new Error("fees not loaded");

@@ -16,25 +16,14 @@ const getAccountShape: GetAccountShape = async (info) => {
     derivationMode,
   });
 
-  const {
-    blockHeight,
-    balance,
-
-    // cryptoOrg stub, will probably them for staking
-    // bondedBalance,
-    // redelegatingBalance,
-    // unbondingBalance,
-    // commissions,
-  } = await getAccount(address);
+  const { blockHeight, balance } = await getAccount(address);
 
   // Merge new operations with the previously synced ones
   let startAt = 0;
   let maxIteration = 20;
   let operations = oldOperations;
-  // console.log("oldOperations.length:", oldOperations.length);
 
   let newOperations = await getOperations(accountId, address, startAt);
-
   do {
     operations = mergeOps(operations, newOperations);
     newOperations = await getOperations(accountId, address, startAt++);
@@ -46,14 +35,6 @@ const getAccountShape: GetAccountShape = async (info) => {
     spendableBalance: balance,
     operationsCount: operations.length,
     blockHeight,
-
-    // cryptoOrg stub, will probably them for staking
-    // cryptoOrgResources: {
-    //   bondedBalance,
-    //   redelegatingBalance,
-    //   unbondingBalance,
-    //   commissions,
-    // },
   };
   return { ...shape, operations };
 };

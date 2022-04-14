@@ -22,6 +22,9 @@ const getIndexerUrl = (route): string =>
 const getNodeUrl = (route): string =>
   `${getEnv("API_OSMOSIS_NODE")}${route || ""}`;
 
+/**
+ * Queries the node for account balance
+ */
 const fetchAccountBalance = async (address: string) => {
   const { data } = await network({
     method: "GET",
@@ -33,6 +36,9 @@ const fetchAccountBalance = async (address: string) => {
   return amount;
 };
 
+/**
+ * Queries the node for account information
+ */
 export const fetchAccountInfo = async (address: string) => {
   const { data } = await network({
     method: "GET",
@@ -154,7 +160,7 @@ function convertTransactionToOperation(
 }
 
 /**
- * Fetch operation list
+ * Fetch operation list from indexer
  */
 export const getOperations = async (
   accountId: string,
@@ -197,7 +203,7 @@ export const getOperations = async (
             convertTransactionToOperation(
               accountId,
               addr,
-              eventContent[0], // check that I can do this w/ indexer people
+              eventContent[0],
               accountTransactions[i],
               memoTransaction
             )
@@ -205,7 +211,7 @@ export const getOperations = async (
           break;
         }
         default:
-          // Get feedback on what we want to do here. Maybe just silently ignore
+          // TODO Get feedback on what we want to do here. Maybe just silently ignore
           // or consider adding the operation with type "NONE", described in operation.ts
           // throw new Error("encountered error while parsing transaction type");
           // console.log(
@@ -220,6 +226,9 @@ export const getOperations = async (
   return operations;
 };
 
+/**
+ * Query the node for updated block height and chain id
+ */
 const fetchLatestBlockInfo = async () => {
   const { data } = await network({
     method: "GET",
@@ -234,11 +243,17 @@ const fetchLatestBlockInfo = async () => {
   return { blockHeight, chainId };
 };
 
+/**
+ * Wrapper to retrieve chain id
+ */
 export const getChainId = async () => {
   const { chainId } = await fetchLatestBlockInfo();
   return chainId;
 };
 
+/**
+ * Wrapper for account balance and node info
+ */
 export const getAccount = async (address: string) => {
   const balance = await fetchAccountBalance(address);
   const { blockHeight } = await fetchLatestBlockInfo();
@@ -249,6 +264,9 @@ export const getAccount = async (address: string) => {
   };
 };
 
+/**
+ * Broadcasts a signed operation to the node
+ */
 export const broadcast = async ({
   signedOperation: { operation, signature },
 }): Promise<Operation> => {

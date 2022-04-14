@@ -1,30 +1,23 @@
 import { BigNumber } from "bignumber.js";
 import type { AccountLike, Account } from "../../types";
 import { getMainAccount } from "../../account";
-// import type { Transaction } from "./types";
 import getEstimatedFees from "./js-getFeesForTransaction";
-// import { createTransaction } from "./js-transaction";
 
 /**
- * Returns the maximum possible amount for transaction
+ * Returns the maximum possible amount for transaction, considering fees
  *
- * @param {Object} param - the account, parentAccount and transaction
+ * @param {Object} param - account, parentAccount
  */
 const estimateMaxSpendable = async ({
   account,
   parentAccount,
-}: // transaction,
-{
+}: {
   account: AccountLike;
   parentAccount: Account | null | undefined;
-  // transaction: Transaction;
 }): Promise<BigNumber> => {
   const a = getMainAccount(account, parentAccount);
-  // const t = { ...createTransaction(), ...transaction, useAllAmount: true };
   const fees = await getEstimatedFees();
-
-  const x = BigNumber.max(0, a.spendableBalance.minus(fees));
-  return x;
+  return BigNumber.max(0, a.spendableBalance.minus(fees));
 };
 
 export default estimateMaxSpendable;

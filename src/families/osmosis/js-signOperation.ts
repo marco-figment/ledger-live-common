@@ -1,5 +1,6 @@
 import {
   Account,
+  DeviceId,
   Operation,
   OperationType,
   SignOperationEvent,
@@ -10,7 +11,7 @@ import { Observable } from "rxjs";
 import { withDevice } from "../../hw/deviceAccess";
 import { encodeOperationId } from "../../operation";
 import { LedgerSigner } from "@cosmjs/ledger-amino";
-import { stringToPath } from "@cosmjs/crypto";
+import { HdPath, stringToPath } from "@cosmjs/crypto";
 import { buildTransaction, postBuildTransaction } from "./js-buildTransaction";
 import BigNumber from "bignumber.js";
 import { makeSignDoc } from "@cosmjs/launchpad";
@@ -25,7 +26,7 @@ const signOperation = ({
   transaction,
 }: {
   account: Account;
-  deviceId: any;
+  deviceId: DeviceId;
   transaction: Transaction;
 }): Observable<SignOperationEvent> =>
   withDevice(deviceId)((transport) =>
@@ -37,7 +38,7 @@ const signOperation = ({
           account.freshAddress
         );
         const chainId = await getChainId();
-        const hdPaths: any = stringToPath("m/" + account.freshAddressPath);
+        const hdPaths: HdPath = stringToPath("m/" + account.freshAddressPath);
         const ledgerSigner = new LedgerSigner(transport, {
           hdPaths: [hdPaths],
           prefix: account.currency.id,
@@ -48,6 +49,10 @@ const signOperation = ({
           account,
           transaction
         );
+
+        if (aminoMsgs.length === 0 || protoMsgs.length === 0) {
+          return;
+        }
 
         const feeToEncode = {
           amount: [
@@ -78,8 +83,6 @@ const signOperation = ({
         );
 
         const signed_tx_bytes = await postBuildTransaction(
-          account,
-          transaction,
           signResponse,
           protoMsgs
         );

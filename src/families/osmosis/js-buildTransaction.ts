@@ -2,24 +2,25 @@ import { Account } from "../../types";
 import { Transaction } from "./types";
 import { SignMode } from "cosmjs-types/cosmos/tx/signing/v1beta1/signing";
 import { cosmos } from "@keplr-wallet/cosmos";
-import { AminoSignResponse } from "@cosmjs/amino";
+import { AminoMsg, AminoSignResponse } from "@cosmjs/amino";
 import { AminoMsgSend } from "@cosmjs/stargate";
 import Long from "long";
+
+type ProtoMsg = {
+  type_url: string;
+  value: Uint8Array;
+};
 
 export const buildTransaction = async (
   account: Account,
   transaction: Transaction
-): Promise<any> => {
-  const aminoMsgs: Array<{ type: string; value: any }> = [];
-  const protoMsgs: Array<{ type_url: string; value: Uint8Array }> = [];
-
-  let isComplete = true;
+): Promise<{ aminoMsgs: AminoMsg[]; protoMsgs: ProtoMsg[] }> => {
+  const aminoMsgs: Array<AminoMsg> = [];
+  const protoMsgs: Array<ProtoMsg> = [];
 
   switch (transaction.mode) {
     case "send":
-      if (!transaction.recipient || transaction.amount.lte(0)) {
-        isComplete = false;
-      } else {
+      if (transaction.recipient && transaction.amount.gt(0)) {
         const aminoMsg: AminoMsgSend = {
           type: "cosmos-sdk/MsgSend",
           value: {
@@ -49,23 +50,16 @@ export const buildTransaction = async (
             ],
           }).finish(),
         });
+        break;
       }
-      break;
   }
-
-  if (!isComplete) {
-    return [];
-  }
-
   return { aminoMsgs, protoMsgs };
 };
 
 export const postBuildTransaction = async (
-  account: Account,
-  transaction: Transaction,
   signResponse: AminoSignResponse,
-  protoMsgs: any
-): Promise<any> => {
+  protoMsgs: Array<ProtoMsg>
+): Promise<Uint8Array> => {
   const signed_tx_bytes = cosmos.tx.v1beta1.TxRaw.encode({
     bodyBytes: cosmos.tx.v1beta1.TxBody.encode({
       messages: protoMsgs,
