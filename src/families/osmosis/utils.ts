@@ -1,5 +1,4 @@
 import { decode } from "bech32";
-import { Account } from "../../types";
 
 // Address validation freely inspired from
 // https://github.com/terra-money/terra.js/blob/9e5f553de3ff3e975eaaf91b1f06e45658b1a5e0/src/core/bech32.ts
