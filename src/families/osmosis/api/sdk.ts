@@ -125,7 +125,7 @@ export const getMicroOsmoAmountCosmosType = (
 };
 
 /**
- * Map the send history transaction to a Ledger Live Operation
+ * Map a send transaction as returned by the indexer to a Ledger Live Operation
  */
 function convertTransactionToOperation(
   accountId: string,
@@ -197,13 +197,29 @@ export const getOperations = async (
         // for context on how we determine if a "send" transaction is IN or OUT.
         transactionType
       ) {
+        // I should handle multi-send too here, ask Ledger
+        // Check how they did it in Cosmos
+        // Use .find instead of [0]
+        // Improve error handling too
         case OsmosisAccountTransactionTypeEnum.Send: {
-          const eventContent: OsmosisEventContent = events[j].sub;
+          // check if there is a sub and it has at least one entry of type send. If this condition breaks, skip transaction (by breaking out of the inner loop)
+          // Checking that sub array, which contains tx messages exists in transaction
+          if (Object.prototype.hasOwnProperty.call(events[j], "sub")) {
+            break;
+          }
+          const eventContent: OsmosisEventContent[] = events[j].sub;
+          // Retrieves the (first) message, which contains sender, recipient and amount info
+          // First message because typically sends transactions only have one sender and one recipient
+          // If no messages are found, skips the transaction altogether
+          const sendEvent = eventContent.find(
+            (event) => event[0] === OsmosisAccountTransactionTypeEnum.Send
+          );
+          if (sendEvent == null) break;
           operations.push(
             convertTransactionToOperation(
               accountId,
               addr,
-              eventContent[0],
+              sendEvent,
               accountTransactions[i],
               memoTransaction
             )
