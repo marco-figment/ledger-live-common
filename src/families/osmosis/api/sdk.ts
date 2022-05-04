@@ -174,6 +174,7 @@ export const getOperations = async (
     url: getIndexerUrl(`/transactions_search/`),
     data: {
       network: "osmosis",
+      type: ["send"],
       account: [addr],
       limit: transactionsLimit,
       offset: startAt,
