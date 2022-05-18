@@ -4,7 +4,6 @@ import { getEnv } from "../../../env";
 import { Operation, OperationType } from "../../../types";
 import { encodeOperationId, patchOperationWithHash } from "../../../operation";
 import {
-  CosmosAmount,
   OsmosisAccountTransaction,
   OsmosisAccountTransactionTypeEnum,
   OsmosisAmount,
@@ -12,6 +11,11 @@ import {
   OsmosisEventContent,
   OsmosisEventNestedContent,
 } from "./sdk.types";
+import {
+  assertIsBroadcastTxSuccess,
+  Coin,
+  SigningStargateClient,
+} from "@cosmjs/stargate";
 
 const DEFAULT_TRANSACTIONS_LIMIT = 100;
 const NAMESPACE = "cosmos";
@@ -21,36 +25,8 @@ const getIndexerUrl = (route): string =>
   `${getEnv("API_OSMOSIS_INDEXER")}${route || ""}`;
 const getNodeUrl = (route): string =>
   `${getEnv("API_OSMOSIS_NODE")}${route || ""}`;
-
-/**
- * Queries the node for account balance
- */
-const fetchAccountBalance = async (address: string) => {
-  const { data } = await network({
-    method: "GET",
-    url: getNodeUrl(`/${NAMESPACE}/bank/${VERSION}/balances/${address}`),
-  });
-  const amount = getMicroOsmoAmountCosmosType(
-    data.balances ? data.balances : []
-  );
-  return amount;
-};
-
-/**
- * Queries the node for account information
- */
-export const fetchAccountInfo = async (address: string) => {
-  const { data } = await network({
-    method: "GET",
-    url: getNodeUrl(`/${NAMESPACE}/auth/${VERSION}/accounts/${address}`),
-  });
-  if (data == null) {
-    throw new Error("Error fetching account information");
-  }
-  const accountNumber = data.account?.account_number ?? null;
-  const sequence = data.account?.sequence ?? 0;
-  return { accountNumber, sequence };
-};
+const getNodeRPCUrl = (route): string =>
+  `${getEnv("API_OSMOSIS_NODE_RPC")}${route || ""}`;
 
 /**
  * Returns true if account is the signer
@@ -112,8 +88,8 @@ export const getMicroOsmoAmount = (amounts: OsmosisAmount[]): BigNumber => {
 /**
  * Extract only the amount from a list of type CosmosAmount
  */
-export const getMicroOsmoAmountCosmosType = (
-  amounts: CosmosAmount[]
+export const getMicroOsmoAmountCoinType = (
+  amounts: readonly Coin[]
 ): BigNumber => {
   return amounts.reduce(
     (result, current) =>
@@ -240,40 +216,37 @@ export const getOperations = async (
 };
 
 /**
- * Query the node for updated block height and chain id
+ * Query the node for account balance and other node info
  */
-const fetchLatestBlockInfo = async () => {
-  const { data } = await network({
-    method: "GET",
-    url: getNodeUrl(`/blocks/latest`),
-  });
-  if (data == null) {
-    throw new Error("Error fetching block information");
-  }
-  // TODO what kind of data validation do we want to have here? any sensible defaults?
-  const blockHeight = data?.block?.header?.height;
-  const chainId = data?.block?.header?.chain_id;
-  return { blockHeight, chainId };
-};
-
-/**
- * Wrapper to retrieve chain id
- */
-export const getChainId = async () => {
-  const { chainId } = await fetchLatestBlockInfo();
-  return chainId;
-};
-
-/**
- * Wrapper for account balance and node info
- */
-export const getAccount = async (address: string) => {
-  const balance = await fetchAccountBalance(address);
-  const { blockHeight } = await fetchLatestBlockInfo();
+export const getAccountDetails = async (address: string) => {
+  const rpcEndpoint = getNodeRPCUrl("");
+  const client = await SigningStargateClient.connect(rpcEndpoint);
+  // What validation here?
+  // Should we throw if can't connect to the node?
+  // For example:
+  //   if (!client) {
+  //     throw new Error("Error fetching account information");
+  //   }
+  const account = await client.getAccount(address);
+  const accountNumber = account?.accountNumber ?? ""; // not sure what is a sensible default here
+  const sequence = account?.sequence ?? 0;
+  const balances = await client.getAllBalances(address);
+  const balance = getMicroOsmoAmountCoinType(balances ? balances : []);
+  const blockHeight = await client.getHeight();
+  const chainId = await client.getChainId();
+  console.log(
+    `account: ${JSON.stringify(
+      account
+    )}, accountNumber: ${accountNumber}, sequence: ${sequence}, balance: ${balance}, blockHeight: ${blockHeight}, chainId: ${chainId}`
+  );
+  client.disconnect();
   return {
     blockHeight,
     balance,
     spendableBalance: balance,
+    chainId,
+    accountNumber,
+    sequence,
   };
 };
 
@@ -281,6 +254,22 @@ export const getAccount = async (address: string) => {
  * Broadcasts a signed operation to the node
  */
 export const broadcast = async ({
+  signedOperation: { operation, signature },
+}): Promise<Operation> => {
+  const rpcEndpoint = getNodeRPCUrl("");
+  const client = await SigningStargateClient.connect(rpcEndpoint);
+  const res = await client.broadcastTx(
+    Uint8Array.from(Buffer.from(signature, "hex"))
+  );
+  assertIsBroadcastTxSuccess(res);
+  client.disconnect();
+  return patchOperationWithHash(operation, res.transactionHash);
+};
+
+/**
+ * Broadcasts a signed operation to the node
+ */
+export const broadcastLCD = async ({
   signedOperation: { operation, signature },
 }): Promise<Operation> => {
   const url = getNodeUrl(`/${NAMESPACE}/tx/${VERSION}/txs`);

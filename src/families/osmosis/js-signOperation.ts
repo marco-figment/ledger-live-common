@@ -6,7 +6,7 @@ import {
   SignOperationEvent,
 } from "../../types";
 import type { Transaction } from "./types";
-import { fetchAccountInfo, getChainId } from "./api/sdk";
+import { getAccountDetails } from "./api/sdk";
 import { Observable } from "rxjs";
 import { withDevice } from "../../hw/deviceAccess";
 import { encodeOperationId } from "../../operation";
@@ -34,10 +34,9 @@ const signOperation = ({
       let cancelled;
 
       async function main() {
-        const { accountNumber, sequence } = await fetchAccountInfo(
+        const { accountNumber, sequence, chainId } = await getAccountDetails(
           account.freshAddress
         );
-        const chainId = await getChainId();
         const hdPaths: HdPath = stringToPath("m/" + account.freshAddressPath);
         const ledgerSigner = new LedgerSigner(transport, {
           hdPaths: [hdPaths],

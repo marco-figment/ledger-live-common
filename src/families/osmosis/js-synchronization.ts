@@ -5,7 +5,7 @@ import {
   GetAccountShape,
   mergeOps,
 } from "../../bridge/jsHelpers";
-import { getAccount, getOperations } from "./api";
+import { getAccountDetails, getOperations } from "./api";
 
 const getAccountShape: GetAccountShape = async (info) => {
   const { address, initialAccount, currency, derivationMode } = info;
@@ -19,8 +19,7 @@ const getAccountShape: GetAccountShape = async (info) => {
     derivationMode,
   });
 
-  const { blockHeight, balance } = await getAccount(address);
-
+  const { blockHeight, balance } = await getAccountDetails(address);
   let operations = oldOperations;
 
   // For indexer efficiency reasons, only fetch new operations starting from the datetime

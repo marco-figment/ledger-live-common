@@ -115,6 +115,11 @@ const envDefinitions = {
     parser: stringParser,
     desc: "Endpoint for Osmosis Node",
   },
+  API_OSMOSIS_NODE_RPC: {
+    def: "http://localhost:6666",
+    parser: stringParser,
+    desc: "Endpoint for Osmosis Node",
+  },
   API_TEZOS_BAKER: {
     parser: stringParser,
     def: "https://tezos-bakers.api.live.ledger.com",

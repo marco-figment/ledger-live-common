@@ -29,11 +29,6 @@ export interface OsmosisAmount {
   numeric: string;
 }
 
-export interface CosmosAmount {
-  amount: string;
-  denom: string;
-}
-
 export interface OsmosisEventNestedContent {
   account: any;
   amounts: OsmosisAmount[];
